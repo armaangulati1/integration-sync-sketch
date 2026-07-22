@@ -1,0 +1,27 @@
+[project]
+name = "integration-sync-sketch"
+version = "0.1.0"
+description = "A study of the patterns behind syncing external systems (calendar, email, CRM) into a unified store: idempotency, incremental cursors, conflict policy, retry with backoff, and dead-lettering. Synthetic self-authored data, demo scope, not production."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+    "icalendar>=6.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "ruff>=0.5"]
+
+[tool.setuptools.packages.find]
+include = ["integration_sync*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B"]
