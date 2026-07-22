@@ -1,0 +1,15 @@
+# Example vendor blocklist (committed, placeholders only).
+#
+# The REAL list of company names to guard against lives in tests/vendor_blocklist.local.txt,
+# which is gitignored and never committed. This example file only holds invented placeholder
+# names so the guard test has something to run against on a fresh clone or in CI.
+#
+# The guard (tests/test_no_company_names.py) scans the whole repo tree for any name in the
+# union of this file and the local file. It does NOT exempt itself; it holds no names of its
+# own, so it is safe to scan. These two list files are the only paths excluded from the scan,
+# because they legitimately contain the forbidden names.
+#
+# One name per line. Blank lines and lines starting with '#' are ignored.
+ExamplePlaceholderVendorAlpha
+ExamplePlaceholderVendorBravo
+NotARealCompanySyncCo
