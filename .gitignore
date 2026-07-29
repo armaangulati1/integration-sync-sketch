@@ -16,6 +16,7 @@ data/*.mbox
 data/*.json
 data/*.db
 data/*.sqlite
+data/milestone_report.txt
 
 # Local env / scratch
 .env

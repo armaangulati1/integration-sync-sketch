@@ -14,6 +14,7 @@ from .models import (
     SOURCE_CALENDAR,
     SOURCE_CRM_IMPORT,
     SOURCE_EMAIL,
+    SOURCE_TICKETS,
     RawRecord,
 )
 from .sync_engine import Reader, SyncEngine, SyncStats
@@ -62,8 +63,15 @@ def dead_letter_rebuilders() -> dict[str, object]:
     def from_crm(natural_key: str, payload: dict) -> RawRecord:
         return RawRecord(source=SOURCE_CRM_IMPORT, natural_key=natural_key, payload=payload)
 
+    def from_tickets(natural_key: str, payload: dict) -> RawRecord:
+        # A ticket dead-lettered for a missing required field carries the drift note that
+        # explains why. Re-wrapping it unchanged means it stays poison on reprocess until
+        # the source starts sending the field again, which is the correct outcome.
+        return RawRecord(source=SOURCE_TICKETS, natural_key=natural_key, payload=payload)
+
     return {
         SOURCE_CALENDAR: from_calendar,
         SOURCE_EMAIL: from_email,
         SOURCE_CRM_IMPORT: from_crm,
+        SOURCE_TICKETS: from_tickets,
     }

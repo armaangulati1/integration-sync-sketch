@@ -36,3 +36,16 @@ def test_failure_demo_runs_and_handles_every_mode():
     assert "OK: every failure mode handled as designed." in result.stdout
     assert "conflict_ignored" in result.stdout
     assert "transient_exhausted" in result.stdout
+
+
+def test_milestone_demo_runs_throttled_drifted_and_self_asserts():
+    result = _run("milestone_demo.py")
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "OK: throttled read, drift absorbed" in result.stdout
+    # The two integration hazards actually fired during the run.
+    assert "1 throttled" in result.stdout
+    assert "alias_used: due_date" in result.stdout
+    # And the rule layer produced its output.
+    assert "milestone_overdue" in result.stdout
+    assert "blocking_ticket_overdue" in result.stdout
+    assert "projected_late" in result.stdout

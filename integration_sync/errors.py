@@ -25,6 +25,23 @@ class TransientError(SyncError):
     """
 
 
+class RateLimitError(TransientError):
+    """A quota rejection from a source API: the 429-equivalent.
+
+    It is a ``TransientError`` because it always succeeds eventually, but it carries one
+    extra piece of information the generic retry path does not have: ``retry_after``, the
+    server's own instruction for how long to wait. A client that ignores that number and
+    falls back to its own exponential schedule either waits too long (throughput lost) or
+    hammers the endpoint again too soon (quota never drains). The fetch loop in
+    ``ticket_source`` honors ``retry_after`` when present and uses its own backoff schedule
+    only when it is absent.
+    """
+
+    def __init__(self, message: str, *, retry_after: float | None = None) -> None:
+        super().__init__(message)
+        self.retry_after = retry_after
+
+
 class PoisonError(SyncError):
     """A record that can never succeed because it is structurally invalid.
 

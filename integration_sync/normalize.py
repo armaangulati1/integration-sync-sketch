@@ -48,6 +48,24 @@ def normalize(raw: RawRecord) -> CanonicalRecord:
             f"missing or invalid contact_email {contact_email!r}", natural_key=key
         )
 
+    # Source-specific fields ride in a reserved "extra" key. Values are coerced to strings so
+    # the content hash is deterministic regardless of how a reader typed them.
+    raw_extra = payload.get("extra") or {}
+    if not isinstance(raw_extra, dict):
+        raise PoisonError(
+            f"extra must be an object, got {type(raw_extra).__name__}", natural_key=key
+        )
+    extra = {str(k): ("" if v is None else str(v)) for k, v in raw_extra.items()}
+
+    # Shape observations ride in a reserved "drift" key. They are metadata about the payload,
+    # never content, so they are carried through untouched and kept out of the hash.
+    raw_drift = payload.get("drift") or ()
+    drift = tuple(
+        {str(k): str(v) for k, v in note.items()}
+        for note in raw_drift
+        if isinstance(note, dict)
+    )
+
     kind = str(payload.get("kind", "")).strip() or "activity"
     subject = str(payload.get("subject", "")).strip()
     body = str(payload.get("body", "")).strip()
@@ -67,6 +85,8 @@ def normalize(raw: RawRecord) -> CanonicalRecord:
         account_name=account_name,
         account_domain=account_domain,
         content_hash="",
+        extra=extra,
+        drift=drift,
     )
     # Fill the content hash now that the canonical fields are settled.
     digest = content_hash(record.hash_fields())

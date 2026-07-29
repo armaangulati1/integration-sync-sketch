@@ -101,9 +101,51 @@ CREATE TABLE IF NOT EXISTS dead_letter (
     UNIQUE (source, natural_key)
 );
 
+CREATE TABLE IF NOT EXISTS tickets (
+    ticket_key    TEXT PRIMARY KEY,
+    summary       TEXT NOT NULL DEFAULT '',
+    status        TEXT NOT NULL DEFAULT '',
+    is_open       INTEGER NOT NULL DEFAULT 1,
+    assignee_email TEXT NOT NULL DEFAULT '',
+    due_date      TEXT NOT NULL DEFAULT '',
+    milestone_key TEXT NOT NULL DEFAULT '',
+    updated_at    TEXT NOT NULL DEFAULT '',
+    unmapped_json TEXT NOT NULL DEFAULT '{}'
+);
+
+CREATE TABLE IF NOT EXISTS milestones (
+    milestone_key TEXT PRIMARY KEY,
+    name          TEXT NOT NULL DEFAULT '',
+    account_name  TEXT NOT NULL DEFAULT '',
+    owner_email   TEXT NOT NULL DEFAULT '',
+    planned_start TEXT NOT NULL DEFAULT '',
+    planned_end   TEXT NOT NULL DEFAULT '',
+    actual_end    TEXT,
+    status        TEXT NOT NULL DEFAULT 'planned'
+);
+
+CREATE TABLE IF NOT EXISTS milestone_deps (
+    milestone_key  TEXT NOT NULL,
+    depends_on_key TEXT NOT NULL,
+    PRIMARY KEY (milestone_key, depends_on_key)
+);
+
+CREATE TABLE IF NOT EXISTS escalations (
+    escalation_id INTEGER PRIMARY KEY,
+    as_of         TEXT NOT NULL,
+    milestone_key TEXT NOT NULL,
+    rule_id       TEXT NOT NULL,
+    severity      TEXT NOT NULL,
+    subject_key   TEXT NOT NULL DEFAULT '',
+    detail        TEXT NOT NULL DEFAULT '',
+    created_at    TEXT NOT NULL,
+    UNIQUE (as_of, milestone_key, rule_id, subject_key)
+);
+
 CREATE INDEX IF NOT EXISTS idx_activities_contact ON activities(contact_id);
 CREATE INDEX IF NOT EXISTS idx_audit_key ON audit_log(source, natural_key);
 CREATE INDEX IF NOT EXISTS idx_dl_unresolved ON dead_letter(resolved);
+CREATE INDEX IF NOT EXISTS idx_tickets_milestone ON tickets(milestone_key);
 """
 
 
@@ -213,6 +255,135 @@ class CrmStore:
         )
         return activity_id
 
+    # -- ticketing projection ------------------------------------------------
+
+    def upsert_ticket(
+        self,
+        *,
+        ticket_key: str,
+        summary: str,
+        status: str,
+        is_open: bool,
+        assignee_email: str,
+        due_date: str,
+        milestone_key: str,
+        updated_at: str,
+        unmapped_json: str = "{}",
+    ) -> None:
+        """Write the ticket-shaped projection of a synced ticket record.
+
+        Called by the engine INSIDE the record's transaction, so a ticket row can never
+        exist without the activity, ledger, and audit rows that justify it.
+        """
+        self.conn.execute(
+            "INSERT INTO tickets (ticket_key, summary, status, is_open, assignee_email, "
+            "due_date, milestone_key, updated_at, unmapped_json) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) "
+            "ON CONFLICT(ticket_key) DO UPDATE SET summary = excluded.summary, "
+            "status = excluded.status, is_open = excluded.is_open, "
+            "assignee_email = excluded.assignee_email, due_date = excluded.due_date, "
+            "milestone_key = excluded.milestone_key, updated_at = excluded.updated_at, "
+            "unmapped_json = excluded.unmapped_json",
+            (ticket_key, summary, status, 1 if is_open else 0, assignee_email,
+             due_date, milestone_key, updated_at, unmapped_json),
+        )
+
+    def get_ticket(self, ticket_key: str) -> sqlite3.Row | None:
+        return self.conn.execute(
+            "SELECT * FROM tickets WHERE ticket_key = ?", (ticket_key,)
+        ).fetchone()
+
+    def all_tickets(self) -> list[sqlite3.Row]:
+        return self.conn.execute("SELECT * FROM tickets ORDER BY ticket_key").fetchall()
+
+    def tickets_for_milestone(self, milestone_key: str) -> list[sqlite3.Row]:
+        return self.conn.execute(
+            "SELECT * FROM tickets WHERE milestone_key = ? ORDER BY ticket_key",
+            (milestone_key,),
+        ).fetchall()
+
+    # -- project milestones --------------------------------------------------
+
+    def upsert_milestone(
+        self,
+        *,
+        milestone_key: str,
+        name: str,
+        account_name: str = "",
+        owner_email: str = "",
+        planned_start: str = "",
+        planned_end: str = "",
+        actual_end: str | None = None,
+        status: str = "planned",
+        depends_on: tuple[str, ...] = (),
+    ) -> None:
+        self.conn.execute(
+            "INSERT INTO milestones (milestone_key, name, account_name, owner_email, "
+            "planned_start, planned_end, actual_end, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?) "
+            "ON CONFLICT(milestone_key) DO UPDATE SET name = excluded.name, "
+            "account_name = excluded.account_name, owner_email = excluded.owner_email, "
+            "planned_start = excluded.planned_start, planned_end = excluded.planned_end, "
+            "actual_end = excluded.actual_end, status = excluded.status",
+            (milestone_key, name, account_name, owner_email, planned_start, planned_end,
+             actual_end, status),
+        )
+        for dep in depends_on:
+            self.conn.execute(
+                "INSERT OR IGNORE INTO milestone_deps (milestone_key, depends_on_key) "
+                "VALUES (?, ?)",
+                (milestone_key, dep),
+            )
+
+    def all_milestones(self) -> list[sqlite3.Row]:
+        return self.conn.execute(
+            "SELECT * FROM milestones ORDER BY planned_end, milestone_key"
+        ).fetchall()
+
+    def deps_of(self, milestone_key: str) -> list[str]:
+        rows = self.conn.execute(
+            "SELECT depends_on_key FROM milestone_deps WHERE milestone_key = ? "
+            "ORDER BY depends_on_key",
+            (milestone_key,),
+        ).fetchall()
+        return [r["depends_on_key"] for r in rows]
+
+    # -- escalations ---------------------------------------------------------
+
+    def add_escalation(
+        self,
+        *,
+        as_of: str,
+        milestone_key: str,
+        rule_id: str,
+        severity: str,
+        subject_key: str = "",
+        detail: str = "",
+    ) -> bool:
+        """Record an escalation. Returns False if this exact one was already recorded.
+
+        The uniqueness key is (as_of, milestone, rule, subject), so re-running the rule
+        layer for the same date is a no-op rather than a duplicate page-out. Two different
+        overdue tickets on one milestone are two distinct escalations, which is why the
+        subject is part of the key.
+        """
+        cur = self.conn.execute(
+            "INSERT OR IGNORE INTO escalations (as_of, milestone_key, rule_id, severity, "
+            "subject_key, detail, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (as_of, milestone_key, rule_id, severity, subject_key, detail, _now()),
+        )
+        return cur.rowcount > 0
+
+    def list_escalations(self, as_of: str | None = None) -> list[sqlite3.Row]:
+        if as_of is None:
+            return self.conn.execute(
+                "SELECT * FROM escalations ORDER BY as_of, milestone_key, rule_id, subject_key"
+            ).fetchall()
+        return self.conn.execute(
+            "SELECT * FROM escalations WHERE as_of = ? "
+            "ORDER BY milestone_key, rule_id, subject_key",
+            (as_of,),
+        ).fetchall()
+
     # -- idempotency ledger --------------------------------------------------
 
     def get_sync_record(self, source: str, natural_key: str) -> sqlite3.Row | None:
@@ -290,6 +461,20 @@ class CrmStore:
         )
         return cur.fetchone() is not None
 
+    def has_audit_detail(self, *, source: str, natural_key: str, action: str, detail: str) -> bool:
+        """True if this exact audit line was already written.
+
+        Used by the drift trail: a schema change should be recorded the first time it is
+        observed and never again, so that re-running a sync over an already-drifted source
+        stays a genuine no-op instead of appending an identical row every pass.
+        """
+        cur = self.conn.execute(
+            "SELECT 1 FROM audit_log WHERE source = ? AND natural_key = ? AND action = ? "
+            "AND detail = ? LIMIT 1",
+            (source, natural_key, action, detail),
+        )
+        return cur.fetchone() is not None
+
     def audit_for(self, source: str, natural_key: str) -> list[sqlite3.Row]:
         cur = self.conn.execute(
             "SELECT * FROM audit_log WHERE source = ? AND natural_key = ? ORDER BY audit_id",
@@ -353,6 +538,7 @@ class CrmStore:
         allowed = {
             "contacts", "accounts", "activities", "sync_records",
             "audit_log", "dead_letter", "sync_state",
+            "tickets", "milestones", "milestone_deps", "escalations",
         }
         if table not in allowed:
             raise ValueError(f"unknown table {table!r}")
@@ -374,5 +560,5 @@ class CrmStore:
         return {
             t: self.count(t)
             for t in ("contacts", "accounts", "activities", "sync_records",
-                      "audit_log", "dead_letter")
+                      "audit_log", "dead_letter", "tickets")
         }

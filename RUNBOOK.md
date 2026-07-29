@@ -18,12 +18,15 @@ alias py=.venv/bin/python
 Generate the synthetic fixtures and run a full sync:
 
 ```bash
-py scripts/generate_synthetic_data.py   # writes data/calendar.ics, data/mailbox.mbox, data/crm_export.json
+py scripts/generate_synthetic_data.py   # writes data/calendar.ics, data/mailbox.mbox,
+                                        # data/crm_export.json, data/tickets.json, data/milestones.json
 py scripts/run_demo.py                   # cold sync, then two re-runs proving idempotency
+py scripts/milestone_demo.py             # throttled + drifting ticket sync, plan, escalations, report
 ```
 
 A healthy run ends with `OK: sync is idempotent (...) and stable.` and a table snapshot
-that is identical across re-runs.
+that is identical across re-runs. The milestone demo ends with `OK: throttled read, drift
+absorbed, plan projected, escalations raised.` and writes `data/milestone_report.txt`.
 
 The state lives in one SQLite file (`data/demo.db` for the demo). Everything below is a
 query or update against that database. Open it with:
@@ -163,6 +166,106 @@ Work down this list in order.
    `SELECT * FROM audit_log WHERE natural_key = '<key>' ORDER BY audit_id;`
    If the incoming record really should win, its source timestamp is wrong; fix it at the
    source rather than overriding the policy.
+
+---
+
+## When the ticket board comes back short
+
+Symptom: the sync reports fewer tickets than the board has, or `read_tickets` raises
+`RateLimitError`.
+
+That exception is deliberate. `fetch_pages` re-raises a throttle it could not wait out
+rather than returning the pages it did get, because a short page set looks exactly like a
+complete board to the caller and would silently mark live tickets as absent.
+
+1. **Check how hard it was throttled.** The endpoint tracks it:
+
+   ```python
+   print(api.calls, "served,", api.refusals, "refused")
+   ```
+
+2. **Give it a bigger budget before you give it a bigger delay.** `read_tickets(...,
+   attempts=N)` controls how many times a single page may be retried. The quota window is
+   the source's, not yours; the only fix on your side is being willing to wait it out.
+
+3. **If the source advertises `Retry-After`, do not override it.** The client already
+   prefers the server's number over its own schedule. A local schedule that is shorter than
+   the window burns the whole retry budget without the bucket ever draining, which is
+   exactly the failure `test_client_falls_back_to_exponential_when_no_retry_after_is_offered`
+   walks through.
+
+4. **Re-running after a throttle is safe.** The cursor only advances over records actually
+   handled, and the sync is idempotent, so a partial run followed by a re-run converges.
+
+---
+
+## When the ticket source changes shape
+
+Symptom: `schema_drift` rows appear in `audit_log`, or tickets start landing in
+`dead_letter` with a `missing_required` explanation.
+
+```sql
+SELECT natural_key, detail FROM audit_log WHERE action = 'schema_drift' ORDER BY audit_id;
+```
+
+Read the `kind` at the front of each detail line:
+
+- `alias_used` -> a field arrived under a different name. **Already handled.** The value was
+  resolved through the alias list and nothing was lost. No action needed, though it is worth
+  moving the new spelling to the front of that field's `aliases` tuple in
+  `ticket_source.TICKET_FIELDS` once the source has clearly settled on it.
+- `type_coerced` -> a scalar became an object or the reverse. **Already handled.** If the new
+  shape is now permanent, flip that field's `object_expected` so the note stops firing on
+  every record; a signal that fires constantly is not a signal.
+- `unknown_field` -> a field nobody declared. It is preserved in `tickets.unmapped_json`, not
+  dropped. If it matters, add a `FieldSpec` for it and a column; until then it is retrievable:
+
+  ```sql
+  SELECT ticket_key, unmapped_json FROM tickets WHERE unmapped_json != '{}';
+  ```
+
+- `missing_required` -> **this one needs you.** A field the connector declared required
+  arrived under no known spelling, so the ticket was dead-lettered rather than written with
+  a blank. Find the new spelling in the source, add it to that field's `aliases`, and
+  reprocess the queue. Nothing was lost in the meantime.
+
+A rename alone never rewrites your rows: drift notes are excluded from the content hash, so
+a re-sync after a pure rename reports `unchanged`, not `updated`. If you see a wave of
+`updated` after a schema change, the values changed too, not just the names.
+
+---
+
+## When an escalation looks wrong
+
+1. **Check the date it was computed for.** Escalations are keyed by `as_of`. A rule fires
+   against a specific day, and re-running that same day is a no-op by design.
+
+   ```sql
+   SELECT as_of, milestone_key, rule_id, subject_key, detail
+   FROM escalations ORDER BY as_of DESC, milestone_key;
+   ```
+
+2. **Read the evidence in `detail`.** Every escalation names what produced it: the ticket
+   key, the predecessor milestone, or the day count. If the evidence is right and the
+   conclusion is wrong, the threshold is wrong, not the rule.
+
+3. **Tune thresholds in one place**, not by editing rules:
+
+   ```python
+   from integration_sync.escalation import RuleConfig, evaluate
+   evaluate(plan, grouped, as_of=today, config=RuleConfig(dependency_slip_threshold_days=5))
+   ```
+
+   Note the boundary: the threshold is a **tolerance**. A predecessor that slipped exactly
+   the threshold does not escalate; it has to exceed it.
+
+4. **A milestone shows slip you did not expect?** It is almost always inherited. Compare
+   `inherited_slip_days` against `slip_days` on the `MilestoneView`: if they match, the delay
+   is upstream and the `dependency_slip` escalation names which predecessor.
+
+5. **`DependencyCycle` on `build_plan`?** Two milestones depend on each other, so no
+   ordering exists and no slip number would be explainable. Fix the plan; the code will not
+   guess an order.
 
 ---
 

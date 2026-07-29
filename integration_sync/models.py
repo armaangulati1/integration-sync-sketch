@@ -14,12 +14,15 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
-# The three source surfaces this demo syncs FROM.
+# The four source surfaces this demo syncs FROM.
 SOURCE_CALENDAR = "calendar"
 SOURCE_EMAIL = "email"
 SOURCE_CRM_IMPORT = "crm_import"
+SOURCE_TICKETS = "tickets"
 
-VALID_SOURCES = frozenset({SOURCE_CALENDAR, SOURCE_EMAIL, SOURCE_CRM_IMPORT})
+VALID_SOURCES = frozenset(
+    {SOURCE_CALENDAR, SOURCE_EMAIL, SOURCE_CRM_IMPORT, SOURCE_TICKETS}
+)
 
 
 @dataclass(frozen=True)
@@ -51,10 +54,19 @@ class CanonicalRecord:
     account_name: str
     account_domain: str
     content_hash: str
+    # Source-specific fields that have no column on the shared activity shape. A ticket puts
+    # its status, due date, and milestone link here. These ARE part of the content hash: a
+    # ticket whose status changes is a genuine content change and must re-sync.
+    extra: dict[str, Any] = field(default_factory=dict)
+    # Observations about the SHAPE of the incoming payload (a field arrived under an alias,
+    # a type was coerced, an unrecognized field appeared). Deliberately NOT part of the
+    # content hash: when a source renames a field but the value is identical, that is a
+    # schema change, not a content change, and it must not masquerade as an update.
+    drift: tuple[dict[str, str], ...] = ()
 
     def hash_fields(self) -> dict[str, Any]:
         """The subset of fields whose change should count as a content change."""
-        return {
+        fields: dict[str, Any] = {
             "kind": self.kind,
             "occurred_at": self.occurred_at.isoformat(),
             "subject": self.subject,
@@ -64,3 +76,7 @@ class CanonicalRecord:
             "account_name": self.account_name,
             "account_domain": self.account_domain,
         }
+        # Namespaced so an extra key can never collide with, or silently shadow, a core one.
+        for key in sorted(self.extra):
+            fields[f"extra.{key}"] = self.extra[key]
+        return fields

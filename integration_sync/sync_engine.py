@@ -61,6 +61,11 @@ FaultHook = Callable[[CanonicalRecord], None]
 # A reader is handed the current cursor and yields the raw records after it.
 Reader = Callable[[str | None], Iterable[RawRecord]]
 
+# A projector writes the source-specific shape of a record (a ticket row, say) alongside the
+# generic activity. It is invoked with the store INSIDE the record's transaction, so the
+# projection either commits with the activity, the ledger, and the audit row, or not at all.
+Projector = Callable[["CrmStore", CanonicalRecord], None]
+
 
 @dataclass
 class SyncStats:
@@ -107,8 +112,10 @@ class SyncEngine:
         jitter: bool = False,
         sleep: Callable[[float], None] = time.sleep,
         fault: FaultHook | None = None,
+        projectors: dict[str, Projector] | None = None,
     ) -> None:
         self.store = store
+        self.projectors = projectors or {}
         self.attempts = attempts
         self.base_delay = base_delay
         self.factor = factor
@@ -228,7 +235,14 @@ class SyncEngine:
         existing = self.store.get_sync_record(source, key)
 
         if existing is not None and existing["content_hash"] == record.content_hash:
-            # Idempotent no-op: identical content already synced.
+            # Idempotent no-op for CONTENT. The shape may still have changed underneath us:
+            # a renamed field carrying an identical value lands here, and that is precisely
+            # the case worth knowing about, so drift is recorded even though nothing else is.
+            # The record is deduped, so a second pass over an already-drifted source writes
+            # nothing at all and the no-op guarantee survives.
+            if self._pending_drift(record):
+                with self.store.transaction():
+                    self._record_drift(record)
             log.info("%s/%s unchanged", source, key)
             return "unchanged"
 
@@ -259,6 +273,9 @@ class SyncEngine:
                 kind=record.kind, subject=record.subject, body=record.body,
                 occurred_at=record.occurred_at.isoformat(),
             )
+            projector = self.projectors.get(source)
+            if projector is not None:
+                projector(self.store, record)
             version = 1 if existing is None else int(existing["version"]) + 1
             # Fault injection point: simulate the downstream write failing AFTER staging the
             # rows. Raising here rolls the whole transaction back, so a retry is clean.
@@ -271,8 +288,41 @@ class SyncEngine:
                 new_hash=record.content_hash,
                 detail=f"version {version}",
             )
+            # Shape changes are recorded next to the content decision so a rename is visible
+            # in the same audit trail as an update, never absorbed silently.
+            self._record_drift(record)
         log.info("%s/%s %s (v%d)", source, key, decision, version)
         return decision
+
+    @staticmethod
+    def _drift_line(note: dict[str, str]) -> str:
+        return (
+            f"{note.get('kind', '')}: {note.get('field', '')} ({note.get('detail', '')})"
+        )
+
+    def _pending_drift(self, record: CanonicalRecord) -> bool:
+        """True if this record carries a drift note not yet in the audit trail."""
+        return any(
+            not self.store.has_audit_detail(
+                source=record.source, natural_key=record.natural_key,
+                action="schema_drift", detail=self._drift_line(note),
+            )
+            for note in record.drift
+        )
+
+    def _record_drift(self, record: CanonicalRecord) -> None:
+        """Append one audit row per not-yet-seen drift note. Caller owns the transaction."""
+        for note in record.drift:
+            line = self._drift_line(note)
+            if self.store.has_audit_detail(
+                source=record.source, natural_key=record.natural_key,
+                action="schema_drift", detail=line,
+            ):
+                continue
+            self.store.add_audit(
+                source=record.source, natural_key=record.natural_key,
+                action="schema_drift", old_hash=None, new_hash=None, detail=line,
+            )
 
     def _decide(self, record: CanonicalRecord, existing) -> str:
         if existing is None:
