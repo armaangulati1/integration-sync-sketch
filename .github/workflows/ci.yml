@@ -27,3 +27,4 @@ jobs:
         run: |
           python scripts/run_demo.py
           python scripts/failure_demo.py
+          python scripts/milestone_demo.py

@@ -1,6 +1,6 @@
-"""End-to-end smoke tests: the two demo scripts run clean and self-assert.
+"""End-to-end smoke tests: the three demo scripts run clean and self-assert.
 
-Both demos end with an internal assertion/`SystemExit` if their invariants break, so a
+Each demo ends with an internal assertion/`SystemExit` if their invariants break, so a
 zero exit code is itself a meaningful check. We also assert on marker strings so a silent
 change in behavior is caught.
 """

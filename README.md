@@ -107,7 +107,7 @@ flowchart LR
     RULES --> T9[("escalations")]
 ```
 
-### The five guarantees and how each is earned
+### The seven guarantees and how each is earned
 
 | Guarantee | Mechanism | Where |
 |---|---|---|
