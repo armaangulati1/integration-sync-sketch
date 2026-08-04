@@ -42,7 +42,7 @@ CLEAN = [
         "fields": {
             "summary": "SYNTHETIC interface mapping",
             "status": "Open",
-            "assignee": {"emailAddress": "dana.rivers@marnovek-health.example"},
+            "assignee": {"emailAddress": "dana.rivers@zeltrovan-health.example"},
             "duedate": "2026-04-10",
             "updated": "2026-04-01T09:00:00+00:00",
             "customfield_milestone": "M2",
@@ -53,7 +53,7 @@ CLEAN = [
         "fields": {
             "summary": "SYNTHETIC credential handoff",
             "status": "Done",
-            "assignee": {"emailAddress": "priya.nadel@ambervale-clinic.example"},
+            "assignee": {"emailAddress": "priya.nadel@ozmirthex-clinic.example"},
             "duedate": "2026-04-12",
             "updated": "2026-04-02T09:00:00+00:00",
             "customfield_milestone": "M2",

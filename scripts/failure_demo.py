@@ -64,11 +64,11 @@ class FaultInjector:
 
 def calendar_reader(_since: str | None) -> Iterable[RawRecord]:
     good = cal_payload("SYNTHETIC kickoff", T0,
-                       "dana.rivers@marnovek-health.example", "Dana Rivers", "Marnovek Health")
+                       "dana.rivers@zeltrovan-health.example", "Dana Rivers", "Zeltrovan Health")
     flaky = cal_payload("SYNTHETIC flaky write", T0,
-                        "sam.okafor@quillhaven-labs.example", "Sam Okafor", "Quillhaven Labs")
+                        "sam.okafor@drenvalik-labs.example", "Sam Okafor", "Drenvalik Labs")
     poison_hard = cal_payload("SYNTHETIC permanent fail", T0,
-                             "priya.nadel@ambervale-clinic.example", "Priya Nadel", "Ambervale")
+                             "priya.nadel@ozmirthex-clinic.example", "Priya Nadel", "Ozmirthex")
     return [
         # a clean record
         RawRecord(SOURCE_CALENDAR, "evt-good@sketch", good),
@@ -77,10 +77,10 @@ def calendar_reader(_since: str | None) -> Iterable[RawRecord]:
         # newer content, then older content of the same key -> update then conflict_ignored
         RawRecord(SOURCE_CALENDAR, "evt-conf@sketch",
                   cal_payload("SYNTHETIC v2 (newer)", T2,
-                              "dana.rivers@marnovek-health.example", "Dana Rivers", "Marnovek")),
+                              "dana.rivers@zeltrovan-health.example", "Dana Rivers", "Zeltrovan")),
         RawRecord(SOURCE_CALENDAR, "evt-conf@sketch",
                   cal_payload("SYNTHETIC v1 (older)", T1,
-                              "dana.rivers@marnovek-health.example", "Dana Rivers", "Marnovek")),
+                              "dana.rivers@zeltrovan-health.example", "Dana Rivers", "Zeltrovan")),
         # a record whose write flakes twice, then succeeds
         RawRecord(SOURCE_CALENDAR, "evt-flaky@sketch", flaky),
         # a record whose write never succeeds -> dead-letter after retries
@@ -91,15 +91,15 @@ def calendar_reader(_since: str | None) -> Iterable[RawRecord]:
         # malformed: missing natural key -> poison
         RawRecord(SOURCE_CALENDAR, None,
                   cal_payload("SYNTHETIC no uid", T0,
-                              "x@quillhaven-labs.example", "X", "Quillhaven Labs")),
+                              "x@drenvalik-labs.example", "X", "Drenvalik Labs")),
     ]
 
 
 def email_reader(_since: str | None) -> Iterable[RawRecord]:
     ok = {
         "kind": "email", "occurred_at": T0, "subject": "SYNTHETIC hi", "body": "SYNTHETIC",
-        "contact_email": "sam.okafor@quillhaven-labs.example", "contact_name": "Sam Okafor",
-        "account_name": "Quillhaven Labs", "account_domain": "quillhaven-labs.example",
+        "contact_email": "sam.okafor@drenvalik-labs.example", "contact_name": "Sam Okafor",
+        "account_name": "Drenvalik Labs", "account_domain": "drenvalik-labs.example",
     }
     bad_date = dict(ok, occurred_at="not-a-date")
     return [

@@ -39,36 +39,36 @@ def calendar_events() -> list[dict]:
             "description": "SYNTHETIC demo event. Onboarding walkthrough.",
             "location": "Video",
             "start": _t(0), "end": _t(1),
-            "organizer_email": "dana.rivers@marnovek-health.example",
+            "organizer_email": "dana.rivers@zeltrovan-health.example",
             "organizer_name": "Dana Rivers",
-            "account_name": "Marnovek Health",
+            "account_name": "Zeltrovan Health",
         },
         {
             "uid": "evt-1002@sketch",
             "summary": "SYNTHETIC data mapping review",
             "description": "SYNTHETIC demo event. Field mapping review.",
             "start": _t(26), "end": _t(27),
-            "organizer_email": "priya.nadel@ambervale-clinic.example",
+            "organizer_email": "priya.nadel@ozmirthex-clinic.example",
             "organizer_name": "Priya Nadel",
-            "account_name": "Ambervale Clinic",
+            "account_name": "Ozmirthex Clinic",
         },
         {
             "uid": "evt-1003@sketch",
             "summary": "SYNTHETIC go-live check-in",
             "description": "SYNTHETIC demo event. Cutover readiness.",
             "start": _t(50), "end": _t(51),
-            "organizer_email": "dana.rivers@marnovek-health.example",
+            "organizer_email": "dana.rivers@zeltrovan-health.example",
             "organizer_name": "Dana Rivers",
-            "account_name": "Marnovek Health",
+            "account_name": "Zeltrovan Health",
         },
         {
             "uid": "evt-1004@sketch",
             "summary": "SYNTHETIC office hours",
             "description": "SYNTHETIC demo event. Open questions.",
             "start": _t(74), "end": _t(75),
-            "organizer_email": "sam.okafor@quillhaven-labs.example",
+            "organizer_email": "sam.okafor@drenvalik-labs.example",
             "organizer_name": "Sam Okafor",
-            "account_name": "Quillhaven Labs",
+            "account_name": "Drenvalik Labs",
         },
     ]
 
@@ -77,33 +77,33 @@ def emails() -> list[dict]:
     return [
         {
             "message_id": "<msg-2001@sketch>",
-            "from_email": "dana.rivers@marnovek-health.example",
+            "from_email": "dana.rivers@zeltrovan-health.example",
             "from_name": "Dana Rivers",
             "to": "solutions@vendor.invalid",
             "subject": "SYNTHETIC Re: kickoff follow-up",
             "date": _t(2),
             "body": "SYNTHETIC demo email. Thanks for the walkthrough.",
-            "account_name": "Marnovek Health",
+            "account_name": "Zeltrovan Health",
         },
         {
             "message_id": "<msg-2002@sketch>",
-            "from_email": "priya.nadel@ambervale-clinic.example",
+            "from_email": "priya.nadel@ozmirthex-clinic.example",
             "from_name": "Priya Nadel",
             "to": "solutions@vendor.invalid",
             "subject": "SYNTHETIC field questions",
             "date": _t(28),
             "body": "SYNTHETIC demo email. A few mapping questions attached.",
-            "account_name": "Ambervale Clinic",
+            "account_name": "Ozmirthex Clinic",
         },
         {
             "message_id": "<msg-2003@sketch>",
-            "from_email": "sam.okafor@quillhaven-labs.example",
+            "from_email": "sam.okafor@drenvalik-labs.example",
             "from_name": "Sam Okafor",
             "to": "solutions@vendor.invalid",
             "subject": "SYNTHETIC scheduling",
             "date": _t(60),
             "body": "SYNTHETIC demo email. Proposing a time for office hours.",
-            "account_name": "Quillhaven Labs",
+            "account_name": "Drenvalik Labs",
         },
     ]
 
@@ -116,10 +116,10 @@ def crm_notes() -> list[dict]:
             "occurred_at": _t(3).isoformat(),
             "subject": "SYNTHETIC call notes",
             "body": "SYNTHETIC demo note. Logged after kickoff.",
-            "contact_email": "dana.rivers@marnovek-health.example",
+            "contact_email": "dana.rivers@zeltrovan-health.example",
             "contact_name": "Dana Rivers",
-            "account_name": "Marnovek Health",
-            "account_domain": "marnovek-health.example",
+            "account_name": "Zeltrovan Health",
+            "account_domain": "zeltrovan-health.example",
         },
         {
             "record_id": "note-3002",
@@ -127,10 +127,10 @@ def crm_notes() -> list[dict]:
             "occurred_at": _t(30).isoformat(),
             "subject": "SYNTHETIC send mapping doc",
             "body": "SYNTHETIC demo task. Follow up with mapping doc.",
-            "contact_email": "priya.nadel@ambervale-clinic.example",
+            "contact_email": "priya.nadel@ozmirthex-clinic.example",
             "contact_name": "Priya Nadel",
-            "account_name": "Ambervale Clinic",
-            "account_domain": "ambervale-clinic.example",
+            "account_name": "Ozmirthex Clinic",
+            "account_domain": "ozmirthex-clinic.example",
         },
     ]
 
@@ -153,13 +153,13 @@ def tickets() -> list[dict]:
                 "duedate": due,
                 "updated": updated,
                 "customfield_milestone": milestone,
-                "account": "Marnovek Health",
+                "account": "Zeltrovan Health",
             },
         }
 
-    dana = "dana.rivers@marnovek-health.example"
-    priya = "priya.nadel@ambervale-clinic.example"
-    sam = "sam.okafor@quillhaven-labs.example"
+    dana = "dana.rivers@zeltrovan-health.example"
+    priya = "priya.nadel@ozmirthex-clinic.example"
+    sam = "sam.okafor@drenvalik-labs.example"
     return [
         issue("OPS-401", "SYNTHETIC map member eligibility fields", "In Progress",
               dana, "2026-04-14", "2026-04-08T09:00:00+00:00", "M2"),
@@ -185,35 +185,35 @@ def milestones() -> list[dict]:
     return [
         {
             "milestone_key": "M1", "name": "SYNTHETIC data mapping signed off",
-            "account_name": "Marnovek Health",
-            "owner_email": "dana.rivers@marnovek-health.example",
+            "account_name": "Zeltrovan Health",
+            "owner_email": "dana.rivers@zeltrovan-health.example",
             "planned_start": "2026-04-01", "planned_end": "2026-04-15",
             "actual_end": "2026-04-19", "status": "done", "depends_on": [],
         },
         {
             "milestone_key": "M2", "name": "SYNTHETIC interface live in the test environment",
-            "account_name": "Marnovek Health",
-            "owner_email": "dana.rivers@marnovek-health.example",
+            "account_name": "Zeltrovan Health",
+            "owner_email": "dana.rivers@zeltrovan-health.example",
             "planned_start": "2026-04-15", "planned_end": "2026-05-10",
             "actual_end": None, "status": "in_progress", "depends_on": ["M1"],
         },
         {
             "milestone_key": "M3", "name": "SYNTHETIC first synthetic claims batch reconciled",
-            "account_name": "Marnovek Health",
-            "owner_email": "sam.okafor@quillhaven-labs.example",
+            "account_name": "Zeltrovan Health",
+            "owner_email": "sam.okafor@drenvalik-labs.example",
             "planned_start": "2026-05-10", "planned_end": "2026-05-22",
             "actual_end": None, "status": "planned", "depends_on": ["M2"],
         },
         {
             "milestone_key": "M4", "name": "SYNTHETIC credentialing pack returned",
-            "account_name": "Marnovek Health",
-            "owner_email": "priya.nadel@ambervale-clinic.example",
+            "account_name": "Zeltrovan Health",
+            "owner_email": "priya.nadel@ozmirthex-clinic.example",
             "planned_start": "2026-04-01", "planned_end": "2026-04-12",
             "actual_end": None, "status": "in_progress", "depends_on": [],
         },
         {
             "milestone_key": "M5", "name": "SYNTHETIC training environment refreshed",
-            "account_name": "Marnovek Health", "owner_email": "",
+            "account_name": "Zeltrovan Health", "owner_email": "",
             "planned_start": "2026-04-18", "planned_end": "2026-04-25",
             "actual_end": None, "status": "planned", "depends_on": [],
         },
