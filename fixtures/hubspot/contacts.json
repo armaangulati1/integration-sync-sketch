@@ -1,0 +1,188 @@
+{
+  "name": "contacts",
+  "notes": [
+    "SELF-AUTHORED SYNTHETIC FIXTURE. Not a recording of a real HubSpot account.",
+    "Envelope shape follows HubSpot's public documentation for GET /crm/v3/objects/contacts:",
+    "a results array of {id, properties, createdAt, updatedAt, archived}, and an optional",
+    "paging.next.{after,link} that is OMITTED on the final page.",
+    "Every person, company, and domain here is invented and uses the reserved .example TLD.",
+    "This cassette is written for a client built with page_size=2, so the exchanges match on",
+    "limit=2. A client using a different page size will miss the cassette, loudly, by design.",
+    "Exchange 2 scripts a 429 for the SAME page as exchange 3, so the backoff path is",
+    "exercised in order: refused with a Retry-After, then served on the retry.",
+    "Contact 704 deliberately has no email address. It is the poison record: the engine's",
+    "existing validation boundary dead-letters it rather than writing a contact with no key."
+  ],
+  "exchanges": [
+    {
+      "path": "/crm/v3/objects/contacts",
+      "params": {
+        "limit": "2",
+        "properties": "email,firstname,lastname,company,jobtitle,lifecyclestage,lastmodifieddate"
+      },
+      "status": 200,
+      "headers": {
+        "Content-Type": "application/json",
+        "X-HubSpot-RateLimit-Remaining": "98"
+      },
+      "body": {
+        "results": [
+          {
+            "id": "701",
+            "properties": {
+              "createdate": "2026-03-01T08:00:00.000Z",
+              "email": "dana.rivers@northgate-health.example",
+              "firstname": "Dana",
+              "lastname": "Rivers",
+              "company": "Northgate Health",
+              "jobtitle": "Director of Revenue Operations",
+              "lifecyclestage": "customer",
+              "hs_object_id": "701",
+              "lastmodifieddate": "2026-04-02T09:15:00.000Z"
+            },
+            "createdAt": "2026-03-01T08:00:00.000Z",
+            "updatedAt": "2026-04-02T09:15:00.000Z",
+            "archived": false
+          },
+          {
+            "id": "702",
+            "properties": {
+              "createdate": "2026-03-04T13:20:00.000Z",
+              "email": "priya.nadel@riverbend-clinic.example",
+              "firstname": "Priya",
+              "lastname": "Nadel",
+              "company": "Riverbend Clinic",
+              "jobtitle": "Clinical Operations Lead",
+              "lifecyclestage": "opportunity",
+              "hs_object_id": "702",
+              "lastmodifieddate": "2026-04-03T11:00:00.000Z"
+            },
+            "createdAt": "2026-03-04T13:20:00.000Z",
+            "updatedAt": "2026-04-03T11:00:00.000Z",
+            "archived": false
+          }
+        ],
+        "paging": {
+          "next": {
+            "after": "702",
+            "link": "https://api.hubapi.com/crm/v3/objects/contacts?after=702"
+          }
+        }
+      }
+    },
+    {
+      "path": "/crm/v3/objects/contacts",
+      "params": {
+        "limit": "2",
+        "after": "702",
+        "properties": "email,firstname,lastname,company,jobtitle,lifecyclestage,lastmodifieddate"
+      },
+      "status": 429,
+      "headers": {
+        "Content-Type": "application/json",
+        "Retry-After": "10",
+        "X-HubSpot-RateLimit-Max": "100",
+        "X-HubSpot-RateLimit-Remaining": "0",
+        "X-HubSpot-RateLimit-Interval-Milliseconds": "10000"
+      },
+      "body": {
+        "status": "error",
+        "message": "You have reached your secondly limit.",
+        "errorType": "RATE_LIMIT",
+        "category": "RATE_LIMITS",
+        "correlationId": "00000000-0000-4000-8000-00000000cafe"
+      }
+    },
+    {
+      "path": "/crm/v3/objects/contacts",
+      "params": {
+        "limit": "2",
+        "after": "702",
+        "properties": "email,firstname,lastname,company,jobtitle,lifecyclestage,lastmodifieddate"
+      },
+      "status": 200,
+      "headers": {
+        "Content-Type": "application/json",
+        "X-HubSpot-RateLimit-Remaining": "97"
+      },
+      "body": {
+        "results": [
+          {
+            "id": "703",
+            "properties": {
+              "createdate": "2026-03-09T10:05:00.000Z",
+              "email": "sam.okafor@lakeside-labs.example",
+              "firstname": "Sam",
+              "lastname": "Okafor",
+              "company": "Lakeside Labs",
+              "jobtitle": "Head of Billing Systems",
+              "lifecyclestage": "customer",
+              "hs_object_id": "703",
+              "lastmodifieddate": "2026-04-04T08:30:00.000Z"
+            },
+            "createdAt": "2026-03-09T10:05:00.000Z",
+            "updatedAt": "2026-04-04T08:30:00.000Z",
+            "archived": false
+          },
+          {
+            "id": "704",
+            "properties": {
+              "createdate": "2026-03-11T15:45:00.000Z",
+              "email": null,
+              "firstname": "Imported",
+              "lastname": "Row",
+              "company": "Northgate Health",
+              "jobtitle": "",
+              "lifecyclestage": "lead",
+              "hs_object_id": "704",
+              "lastmodifieddate": "2026-04-05T10:00:00.000Z"
+            },
+            "createdAt": "2026-03-11T15:45:00.000Z",
+            "updatedAt": "2026-04-05T10:00:00.000Z",
+            "archived": false
+          }
+        ],
+        "paging": {
+          "next": {
+            "after": "704",
+            "link": "https://api.hubapi.com/crm/v3/objects/contacts?after=704"
+          }
+        }
+      }
+    },
+    {
+      "path": "/crm/v3/objects/contacts",
+      "params": {
+        "limit": "2",
+        "after": "704",
+        "properties": "email,firstname,lastname,company,jobtitle,lifecyclestage,lastmodifieddate"
+      },
+      "status": 200,
+      "headers": {
+        "Content-Type": "application/json",
+        "X-HubSpot-RateLimit-Remaining": "96"
+      },
+      "body": {
+        "results": [
+          {
+            "id": "705",
+            "properties": {
+              "createdate": "2026-03-15T09:30:00.000Z",
+              "email": "alex.fenn@northgate-health.example",
+              "firstname": "Alex",
+              "lastname": "Fenn",
+              "company": "Northgate Health",
+              "jobtitle": "Integration Analyst",
+              "lifecyclestage": "customer",
+              "hs_object_id": "705",
+              "lastmodifieddate": "2026-04-06T14:20:00.000Z"
+            },
+            "createdAt": "2026-03-15T09:30:00.000Z",
+            "updatedAt": "2026-04-06T14:20:00.000Z",
+            "archived": false
+          }
+        ]
+      }
+    }
+  ]
+}

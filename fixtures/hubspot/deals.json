@@ -1,0 +1,127 @@
+{
+  "name": "deals",
+  "notes": [
+    "SELF-AUTHORED SYNTHETIC FIXTURE. Not a recording of a real HubSpot account.",
+    "Envelope shape follows HubSpot's public documentation for GET /crm/v3/objects/deals,",
+    "including the associations block returned when the request asks for associations=contacts:",
+    "associations.contacts.results[] carries bare object ids, never emails, which is why the",
+    "deal reader needs a resolver and why deals must sync AFTER contacts.",
+    "Deal 8803 is associated with contact id 999, which does not exist in the contacts",
+    "cassette. It resolves to no email and is dead-lettered by the existing poison path.",
+    "That is the intended demonstration of the ordering dependency between object types,",
+    "not a defect in the fixture.",
+    "Written for a client built with page_size=2."
+  ],
+  "exchanges": [
+    {
+      "path": "/crm/v3/objects/deals",
+      "params": {
+        "limit": "2",
+        "associations": "contacts",
+        "properties": "dealname,dealstage,pipeline,amount,closedate,hubspot_owner_id,hs_lastmodifieddate"
+      },
+      "status": 200,
+      "headers": {
+        "Content-Type": "application/json",
+        "X-HubSpot-RateLimit-Remaining": "95"
+      },
+      "body": {
+        "results": [
+          {
+            "id": "8801",
+            "properties": {
+              "amount": "48000.00",
+              "closedate": "2026-05-29T00:00:00.000Z",
+              "createdate": "2026-03-02T09:00:00.000Z",
+              "dealname": "Northgate Health claims integration",
+              "dealstage": "contractsent",
+              "pipeline": "default",
+              "hubspot_owner_id": "55501",
+              "hs_lastmodifieddate": "2026-04-07T12:00:00.000Z"
+            },
+            "createdAt": "2026-03-02T09:00:00.000Z",
+            "updatedAt": "2026-04-07T12:00:00.000Z",
+            "archived": false,
+            "associations": {
+              "contacts": {
+                "results": [
+                  { "id": "701", "type": "deal_to_contact" }
+                ]
+              }
+            }
+          },
+          {
+            "id": "8802",
+            "properties": {
+              "amount": "12500.50",
+              "closedate": "2026-06-12T00:00:00.000Z",
+              "createdate": "2026-03-18T16:40:00.000Z",
+              "dealname": "Lakeside Labs eligibility pilot",
+              "dealstage": "closedwon",
+              "pipeline": "default",
+              "hubspot_owner_id": "55502",
+              "hs_lastmodifieddate": "2026-04-08T09:45:00.000Z"
+            },
+            "createdAt": "2026-03-18T16:40:00.000Z",
+            "updatedAt": "2026-04-08T09:45:00.000Z",
+            "archived": false,
+            "associations": {
+              "contacts": {
+                "results": [
+                  { "id": "703", "type": "deal_to_contact" }
+                ]
+              }
+            }
+          }
+        ],
+        "paging": {
+          "next": {
+            "after": "8802",
+            "link": "https://api.hubapi.com/crm/v3/objects/deals?after=8802"
+          }
+        }
+      }
+    },
+    {
+      "path": "/crm/v3/objects/deals",
+      "params": {
+        "limit": "2",
+        "after": "8802",
+        "associations": "contacts",
+        "properties": "dealname,dealstage,pipeline,amount,closedate,hubspot_owner_id,hs_lastmodifieddate"
+      },
+      "status": 200,
+      "headers": {
+        "Content-Type": "application/json",
+        "X-HubSpot-RateLimit-Remaining": "94"
+      },
+      "body": {
+        "results": [
+          {
+            "id": "8803",
+            "properties": {
+              "amount": "31000.00",
+              "closedate": "2026-07-03T00:00:00.000Z",
+              "createdate": "2026-03-25T11:10:00.000Z",
+              "dealname": "Riverbend Clinic prior-auth rollout",
+              "dealstage": "qualifiedtobuy",
+              "pipeline": "default",
+              "hubspot_owner_id": "55501",
+              "hs_lastmodifieddate": "2026-04-09T15:30:00.000Z"
+            },
+            "createdAt": "2026-03-25T11:10:00.000Z",
+            "updatedAt": "2026-04-09T15:30:00.000Z",
+            "archived": false,
+            "associations": {
+              "contacts": {
+                "results": [
+                  { "id": "999", "type": "deal_to_contact" }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
