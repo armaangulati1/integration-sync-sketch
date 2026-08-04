@@ -17,8 +17,8 @@ def test_ics_write_then_read(tmp_path):
             "uid": "evt-a@sketch", "summary": "SYNTHETIC a",
             "start": datetime(2026, 3, 2, 9, tzinfo=UTC),
             "end": datetime(2026, 3, 2, 10, tzinfo=UTC),
-            "organizer_email": "dana.rivers@vantree-health.example",
-            "organizer_name": "Dana Rivers", "account_name": "Vantree Health",
+            "organizer_email": "dana.rivers@marnovek-health.example",
+            "organizer_name": "Dana Rivers", "account_name": "Marnovek Health",
         },
     ])
     # The file is real ICS.
@@ -29,9 +29,9 @@ def test_ics_write_then_read(tmp_path):
     r = records[0]
     assert r.source == SOURCE_CALENDAR
     assert r.natural_key == "evt-a@sketch"
-    assert r.payload["contact_email"] == "dana.rivers@vantree-health.example"
+    assert r.payload["contact_email"] == "dana.rivers@marnovek-health.example"
     assert r.payload["occurred_at"] == "2026-03-02T09:00:00+00:00"
-    assert r.payload["account_name"] == "Vantree Health"
+    assert r.payload["account_name"] == "Marnovek Health"
 
 
 def test_ics_reader_honors_cursor(tmp_path):
@@ -39,10 +39,10 @@ def test_ics_reader_honors_cursor(tmp_path):
     write_ics(path, [
         {"uid": "e1@sketch", "summary": "SYNTHETIC 1",
          "start": datetime(2026, 3, 2, 9, tzinfo=UTC),
-         "organizer_email": "a@vantree-health.example"},
+         "organizer_email": "a@marnovek-health.example"},
         {"uid": "e2@sketch", "summary": "SYNTHETIC 2",
          "start": datetime(2026, 3, 5, 9, tzinfo=UTC),
-         "organizer_email": "a@vantree-health.example"},
+         "organizer_email": "a@marnovek-health.example"},
     ])
     keys = [r.natural_key for r in read_ics(path, "2026-03-03T00:00:00+00:00")]
     assert keys == ["e2@sketch"]

@@ -78,7 +78,7 @@ Two safety properties are worth knowing, because they are tested rather than pro
 In the test account UI, create by hand:
 
 - **3 to 5 contacts.** Give each an email at a `.example` domain, for example
-  `dana.rivers@vantree-health.example`. Fill in first name, last name, and company.
+  `dana.rivers@marnovek-health.example`. Fill in first name, last name, and company.
 - **1 contact with no email address at all.** This is the interesting one. It exercises the
   dead-letter path against a real record rather than a fixture.
 - **2 to 3 deals.** Set a name, an amount, and a stage. **Associate at least one deal with

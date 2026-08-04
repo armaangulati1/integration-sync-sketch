@@ -26,7 +26,7 @@ from integration_sync.escalation import (
 from integration_sync.milestones import STATUS_DONE, STATUS_IN_PROGRESS, build_plan
 
 AS_OF = date(2026, 4, 20)
-OWNER = "dana.rivers@vantree-health.example"
+OWNER = "dana.rivers@marnovek-health.example"
 
 
 def healthy_store() -> CrmStore:
@@ -35,13 +35,13 @@ def healthy_store() -> CrmStore:
     store.init_schema()
     store.upsert_milestone(
         milestone_key="M1", name="SYNTHETIC data mapping signed off",
-        account_name="Vantree Health", owner_email=OWNER,
+        account_name="Marnovek Health", owner_email=OWNER,
         planned_start="2026-04-01", planned_end="2026-04-15",
         actual_end="2026-04-14", status=STATUS_DONE,
     )
     store.upsert_milestone(
         milestone_key="M2", name="SYNTHETIC interface live in the test environment",
-        account_name="Vantree Health", owner_email=OWNER,
+        account_name="Marnovek Health", owner_email=OWNER,
         planned_start="2026-04-15", planned_end="2026-05-10",
         status=STATUS_IN_PROGRESS, depends_on=("M1",),
     )

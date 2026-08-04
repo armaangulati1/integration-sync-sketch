@@ -1,4 +1,12 @@
-"""Guard: no real company name may appear anywhere in the committed tree.
+"""Guard: no real company name may be used as fixture data anywhere in the committed tree.
+
+The invariant is about *synthetic data posing as real*. Accounts, contacts, deal names,
+email domains and demo output must all be invented, so that nothing in this repository can
+be mistaken for a real customer or a real engagement. Prose that names a real organization
+factually is a different thing and is allowed: the verification record in
+BRANCH_EVIDENCE.md names the real companies that the invented fixture names were checked
+against, which is the whole point of that record. The blocklist is therefore a list of
+names that must never be *used*, not a ban on the characters ever appearing.
 
 Design (mirrors the externalized-blocklist pattern): the names to forbid are loaded from
 two data files, a committed example file of invented placeholders and a gitignored local

@@ -128,9 +128,15 @@ def main(argv: list[str] | None = None) -> None:
         f"  client: {contacts_client.pages_fetched} page(s) fetched, "
         f"{contacts_client.throttles} throttle(s) waited out"
     )
-    if contact_stats.dead_letter_keys:
-        print(f"  dead-lettered: {', '.join(contact_stats.dead_letter_keys)} "
-              f"(no email address, so no contact to attach to)")
+    # Same rule as the deal rows below: a natural key is a record id from the source, so
+    # against a live sandbox it identifies somebody's record. Live mode gets a count.
+    if contact_stats.dead_lettered:
+        if args.live:
+            print(f"  dead-lettered: {contact_stats.dead_lettered} record(s) "
+                  f"(no email address, so no contact to attach to; keys withheld in live mode)")
+        else:
+            print(f"  dead-lettered: {', '.join(contact_stats.dead_letter_keys)} "
+                  f"(no email address, so no contact to attach to)")
 
     print("\n--- syncing HubSpot deals (associations resolved against synced contacts) ---")
     deals_client = build_client(
@@ -146,9 +152,13 @@ def main(argv: list[str] | None = None) -> None:
         f"  created={deal_stats.created} unchanged={deal_stats.unchanged} "
         f"dead_lettered={deal_stats.dead_lettered} cursor->{deal_stats.cursor_after}"
     )
-    if deal_stats.dead_letter_keys:
-        print(f"  dead-lettered: {', '.join(deal_stats.dead_letter_keys)} "
-              f"(associated contact not present, so the deal has nobody to attach to)")
+    if deal_stats.dead_lettered:
+        if args.live:
+            print(f"  dead-lettered: {deal_stats.dead_lettered} record(s) (associated contact "
+                  f"not present, so the deal has nobody to attach to; keys withheld in live mode)")
+        else:
+            print(f"  dead-lettered: {', '.join(deal_stats.dead_letter_keys)} "
+                  f"(associated contact not present, so the deal has nobody to attach to)")
     # Record contents are printed for the CASSETTES only. Against a live sandbox the same
     # line would put deal names and contact addresses on a console whose output people
     # paste into issues and transcripts, and whatever is in a sandbox is still somebody's

@@ -113,6 +113,7 @@ flowchart LR
     ENG -->|"invalid / exhausted"| DLQ[("dead_letter")]
 
     APPLY --> DB[(CRM SQLite)]
+    DB --> DB_tables
     subgraph DB_tables["CRM SQLite"]
         T1["contacts"]
         T2["accounts"]

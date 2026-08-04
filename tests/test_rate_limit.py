@@ -41,7 +41,7 @@ def issue(key: str, updated: str) -> dict:
         "fields": {
             "summary": f"SYNTHETIC {key}",
             "status": "Open",
-            "assignee": {"emailAddress": "dana.rivers@vantree-health.example"},
+            "assignee": {"emailAddress": "dana.rivers@marnovek-health.example"},
             "duedate": "2026-04-10",
             "updated": updated,
             "customfield_milestone": "M1",

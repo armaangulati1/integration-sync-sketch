@@ -42,7 +42,7 @@ CLEAN = [
         "fields": {
             "summary": "SYNTHETIC interface mapping",
             "status": "Open",
-            "assignee": {"emailAddress": "dana.rivers@vantree-health.example"},
+            "assignee": {"emailAddress": "dana.rivers@marnovek-health.example"},
             "duedate": "2026-04-10",
             "updated": "2026-04-01T09:00:00+00:00",
             "customfield_milestone": "M2",

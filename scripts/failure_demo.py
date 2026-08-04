@@ -64,7 +64,7 @@ class FaultInjector:
 
 def calendar_reader(_since: str | None) -> Iterable[RawRecord]:
     good = cal_payload("SYNTHETIC kickoff", T0,
-                       "dana.rivers@vantree-health.example", "Dana Rivers", "Vantree Health")
+                       "dana.rivers@marnovek-health.example", "Dana Rivers", "Marnovek Health")
     flaky = cal_payload("SYNTHETIC flaky write", T0,
                         "sam.okafor@quillhaven-labs.example", "Sam Okafor", "Quillhaven Labs")
     poison_hard = cal_payload("SYNTHETIC permanent fail", T0,
@@ -77,10 +77,10 @@ def calendar_reader(_since: str | None) -> Iterable[RawRecord]:
         # newer content, then older content of the same key -> update then conflict_ignored
         RawRecord(SOURCE_CALENDAR, "evt-conf@sketch",
                   cal_payload("SYNTHETIC v2 (newer)", T2,
-                              "dana.rivers@vantree-health.example", "Dana Rivers", "Vantree")),
+                              "dana.rivers@marnovek-health.example", "Dana Rivers", "Marnovek")),
         RawRecord(SOURCE_CALENDAR, "evt-conf@sketch",
                   cal_payload("SYNTHETIC v1 (older)", T1,
-                              "dana.rivers@vantree-health.example", "Dana Rivers", "Vantree")),
+                              "dana.rivers@marnovek-health.example", "Dana Rivers", "Marnovek")),
         # a record whose write flakes twice, then succeeds
         RawRecord(SOURCE_CALENDAR, "evt-flaky@sketch", flaky),
         # a record whose write never succeeds -> dead-letter after retries
