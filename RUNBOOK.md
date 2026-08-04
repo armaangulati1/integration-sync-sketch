@@ -11,6 +11,13 @@ python -m venv .venv && .venv/bin/pip install -e ".[dev]"
 alias py=.venv/bin/python
 ```
 
+The dashboard is the one thing that needs a UI framework, so it is a separate extra. Install
+it too if you intend to run `dashboard/app.py`, or three of its four tests will skip:
+
+```bash
+.venv/bin/pip install -e ".[dev,dashboard]"
+```
+
 ---
 
 ## Normal operation
@@ -166,6 +173,57 @@ Work down this list in order.
    `SELECT * FROM audit_log WHERE natural_key = '<key>' ORDER BY audit_id;`
    If the incoming record really should win, its source timestamp is wrong; fix it at the
    source rather than overriding the policy.
+
+---
+
+## When the HubSpot sync looks wedged
+
+Symptom: `scripts/hubspot_demo.py` sits there, or a live run takes minutes for a handful of
+records.
+
+1. **Read the throttle counter before assuming a hang.** The run prints
+   `N page(s) fetched, M throttle(s) waited out`. A live run honors the server's own
+   `Retry-After`, which HubSpot commonly sets to ten seconds, so a throttled sync is
+   *supposed* to look stopped for that long. Recorded mode never really sleeps, so a pause
+   there is a genuine problem rather than a wait.
+2. **Distinguish a stopped job from a quiet source.** On the dashboard, or via
+   `SELECT source, cursor, updated_at FROM sync_state;`, compare cursor **data lag** with
+   cursor **staleness**. High lag with low staleness means the job is running and there is
+   simply nothing new. High staleness means the job itself stopped, and that is the one to
+   chase.
+3. **Check it is not refusing to start.** Live mode exits rather than falling back to the
+   cassettes when `HUBSPOT_PRIVATE_APP_TOKEN` is unset, so a run that ended immediately with
+   a token complaint never talked to anything. See RUNBOOK_HUBSPOT.md.
+4. **A deal that never lands is usually an unresolved association, not a stall.** A deal
+   whose associated contact was never synced is dead-lettered on purpose. Look for it with
+   `SELECT natural_key, error FROM dead_letter WHERE source = 'hubspot_deals';` and sync
+   contacts first.
+
+---
+
+## When the dashboard shows nothing, or the wrong thing
+
+Symptom: the page says `No sync store at ...`, or the numbers do not match the run you just
+did.
+
+1. **It is almost always pointed at a different database.** The dashboard defaults to
+   `data/hubspot_demo.db`, which is what `scripts/hubspot_demo.py` writes. `run_demo.py`
+   writes `data/demo.db` instead, and `failure_demo.py` and `milestone_demo.py` use an
+   in-memory store and leave no file at all. Point it explicitly rather than guessing:
+
+   ```bash
+   SYNC_DB=data/demo.db .venv/bin/streamlit run dashboard/app.py
+   ```
+
+2. **Confirm which file it actually opened.** The error message prints the resolved path,
+   and `SYNC_DB` is read once at script-run time, so export it before starting streamlit and
+   not in another shell.
+3. **`hubspot_demo.py` deletes and rebuilds its database on every run.** Numbers that
+   changed under you after a re-run are that, not a metrics bug.
+4. **Empty panels on a store that exists** mean the sync wrote nothing, not that the page
+   broke. Check `SELECT COUNT(*) FROM sync_records;` first. Every number on the page comes
+   from `integration_sync/ops_metrics.py`, so if the store has rows and a tile disagrees,
+   the bug is in that module and there is a test that should have caught it.
 
 ---
 

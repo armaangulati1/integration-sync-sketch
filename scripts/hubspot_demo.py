@@ -149,9 +149,16 @@ def main(argv: list[str] | None = None) -> None:
     if deal_stats.dead_letter_keys:
         print(f"  dead-lettered: {', '.join(deal_stats.dead_letter_keys)} "
               f"(associated contact not present, so the deal has nobody to attach to)")
-    for deal in store.all_deals():
-        print(f"  deal {deal['deal_id']}: {deal['name']} | stage={deal['stage']} "
-              f"| amount={deal['amount']} | contact={deal['contact_email']}")
+    # Record contents are printed for the CASSETTES only. Against a live sandbox the same
+    # line would put deal names and contact addresses on a console whose output people
+    # paste into issues and transcripts, and whatever is in a sandbox is still somebody's
+    # data. Live mode gets counts. This matches what _write_live_evidence already promises.
+    if args.live:
+        print(f"  {len(store.all_deals())} deal row(s) projected (contents withheld in live mode)")
+    else:
+        for deal in store.all_deals():
+            print(f"  deal {deal['deal_id']}: {deal['name']} | stage={deal['stage']} "
+                  f"| amount={deal['amount']} | contact={deal['contact_email']}")
 
     print("\n--- re-syncing the SAME contacts (idempotency check) ---")
     store.set_cursor(SOURCE_HUBSPOT_CONTACTS, None)
@@ -178,8 +185,14 @@ def main(argv: list[str] | None = None) -> None:
               f"updated={row.updated:<3} dlq_open={row.dead_lettered_open}")
     dlq = om.dead_letter_report(store, as_of)
     print(f"\n  dead-letter depth: {dlq.depth}")
-    for row in dlq.rows:
-        print(f"    {row.source}/{row.natural_key} [{row.category}] {row.error[:60]}")
+    # Same rule as the deal rows above: an error string can carry the payload that caused
+    # it, so live mode reports the shape of the queue and not its contents.
+    if args.live:
+        for category, count in sorted(_count_by_category(dlq.rows).items()):
+            print(f"    {category}: {count}")
+    else:
+        for row in dlq.rows:
+            print(f"    {row.source}/{row.natural_key} [{row.category}] {row.error[:60]}")
 
     print(f"\nstore written to {DB_PATH.relative_to(REPO)}")
     print("view it with:  .venv/bin/streamlit run dashboard/app.py")
@@ -191,6 +204,14 @@ def main(argv: list[str] | None = None) -> None:
 
     store.close()
     print("\nOK: HubSpot contacts and deals synced, throttle survived, re-run changed nothing.")
+
+
+def _count_by_category(rows) -> dict[str, int]:
+    """Queue shape without queue contents, for the live path."""
+    counts: dict[str, int] = {}
+    for row in rows:
+        counts[row.category] = counts.get(row.category, 0) + 1
+    return counts
 
 
 def _self_check(store, contact_stats, deal_stats, again, client, sleeper) -> None:

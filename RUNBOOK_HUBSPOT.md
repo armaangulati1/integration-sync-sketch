@@ -78,7 +78,7 @@ Two safety properties are worth knowing, because they are tested rather than pro
 In the test account UI, create by hand:
 
 - **3 to 5 contacts.** Give each an email at a `.example` domain, for example
-  `dana.rivers@northgate-health.example`. Fill in first name, last name, and company.
+  `dana.rivers@vantree-health.example`. Fill in first name, last name, and company.
 - **1 contact with no email address at all.** This is the interesting one. It exercises the
   dead-letter path against a real record rather than a fixture.
 - **2 to 3 deals.** Set a name, an amount, and a stage. **Associate at least one deal with
@@ -140,6 +140,11 @@ Optionally, a third:
 
 Before committing any screenshot, look at it. Crop or redact anything that shows the token,
 a portal id you would rather not publish, or a real name.
+
+Do not commit the live console transcript. `demo_transcript.txt` is a record of the RECORDED
+run and nothing else. Live mode already withholds deal rows and dead-letter errors from the
+console for this reason, but the transcript also carries the sandbox's own timings and
+counts, and the committed evidence file is the place for those.
 
 ## 7. Update the claim
 

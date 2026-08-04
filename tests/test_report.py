@@ -10,7 +10,7 @@ from integration_sync.milestones import STATUS_DONE, STATUS_IN_PROGRESS, build_p
 from integration_sync.report import render
 
 AS_OF = date(2026, 4, 20)
-OWNER = "dana.rivers@northgate-health.example"
+OWNER = "dana.rivers@vantree-health.example"
 
 
 def build(late: bool) -> CrmStore:

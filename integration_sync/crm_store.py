@@ -120,7 +120,11 @@ CREATE TABLE IF NOT EXISTS deals (
     pipeline      TEXT NOT NULL DEFAULT '',
     amount        TEXT NOT NULL DEFAULT '',
     close_date    TEXT NOT NULL DEFAULT '',
-    owner_email   TEXT NOT NULL DEFAULT '',
+    -- owner_ref, not owner_email: HubSpot's `hubspot_owner_id` is an opaque numeric owner
+    -- id, and resolving it to a person costs a separate /crm/v3/owners call this connector
+    -- does not make. Naming the column for a value it does not hold is how a downstream
+    -- reader ends up mailing an integer.
+    owner_ref     TEXT NOT NULL DEFAULT '',
     contact_email TEXT NOT NULL DEFAULT '',
     is_open       INTEGER NOT NULL DEFAULT 1,
     updated_at    TEXT NOT NULL DEFAULT '',
@@ -328,7 +332,7 @@ class CrmStore:
         pipeline: str,
         amount: str,
         close_date: str,
-        owner_email: str,
+        owner_ref: str,
         contact_email: str,
         is_open: bool,
         updated_at: str,
@@ -340,18 +344,20 @@ class CrmStore:
         projector is: a deal row must never exist without the activity, ledger, and audit
         rows that justify it. ``amount`` is stored as TEXT deliberately, so a currency value
         round-trips exactly instead of through a binary float.
+
+        ``owner_ref`` is an opaque owner reference, not an address. See the schema comment.
         """
         self.conn.execute(
             "INSERT INTO deals (deal_id, name, stage, pipeline, amount, close_date, "
-            "owner_email, contact_email, is_open, updated_at, unmapped_json) "
+            "owner_ref, contact_email, is_open, updated_at, unmapped_json) "
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
             "ON CONFLICT(deal_id) DO UPDATE SET name = excluded.name, "
             "stage = excluded.stage, pipeline = excluded.pipeline, "
             "amount = excluded.amount, close_date = excluded.close_date, "
-            "owner_email = excluded.owner_email, contact_email = excluded.contact_email, "
+            "owner_ref = excluded.owner_ref, contact_email = excluded.contact_email, "
             "is_open = excluded.is_open, updated_at = excluded.updated_at, "
             "unmapped_json = excluded.unmapped_json",
-            (deal_id, name, stage, pipeline, amount, close_date, owner_email,
+            (deal_id, name, stage, pipeline, amount, close_date, owner_ref,
              contact_email, 1 if is_open else 0, updated_at, unmapped_json),
         )
 

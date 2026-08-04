@@ -323,9 +323,9 @@ def test_a_contact_becomes_an_addressable_record():
     records = list(read_hubspot_contacts(contacts_client(FakeSleep())))
     assert [r.natural_key for r in records] == ["701", "702", "703", "704", "705"]
     first = records[0].payload
-    assert first["contact_email"] == "dana.rivers@northgate-health.example"
+    assert first["contact_email"] == "dana.rivers@vantree-health.example"
     assert first["contact_name"] == "Dana Rivers"
-    assert first["account_name"] == "Northgate Health"
+    assert first["account_name"] == "Vantree Health"
     assert first["occurred_at"] == "2026-04-02T09:15:00+00:00"
     assert first["extra"]["lifecyclestage"] == "customer"
 
@@ -340,8 +340,8 @@ def test_the_cursor_filters_records_the_list_endpoint_cannot_filter_server_side(
 
 def test_a_deal_resolves_its_contact_through_the_association_block():
     emails = {
-        "701": "dana.rivers@northgate-health.example",
-        "703": "sam.okafor@lakeside-labs.example",
+        "701": "dana.rivers@vantree-health.example",
+        "703": "sam.okafor@quillhaven-labs.example",
     }
     records = list(
         read_hubspot_deals(
@@ -349,7 +349,7 @@ def test_a_deal_resolves_its_contact_through_the_association_block():
         )
     )
     assert [r.natural_key for r in records] == ["8801", "8802", "8803"]
-    assert records[0].payload["contact_email"] == "dana.rivers@northgate-health.example"
+    assert records[0].payload["contact_email"] == "dana.rivers@vantree-health.example"
     assert records[0].payload["extra"]["is_open"] == "1"
     assert records[1].payload["extra"]["is_open"] == "0"  # closedwon
     # 8803 points at a contact that does not exist, so it resolves to nothing.
@@ -441,7 +441,7 @@ def test_deals_sync_after_contacts_and_project_into_the_deals_table(store):
     assert stats.dead_letter_keys == ["8803"]
 
     deal = store.get_deal("8801")
-    assert deal["contact_email"] == "dana.rivers@northgate-health.example"
+    assert deal["contact_email"] == "dana.rivers@vantree-health.example"
     assert deal["amount"] == "48000.00"
     assert deal["is_open"] == 1
     assert store.get_deal("8802")["is_open"] == 0

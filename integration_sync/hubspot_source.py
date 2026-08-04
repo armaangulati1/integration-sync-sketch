@@ -641,7 +641,9 @@ def deal_projector(store, record) -> None:
         pipeline=extra.get("pipeline", ""),
         amount=extra.get("amount", ""),
         close_date=extra.get("closedate", ""),
-        owner_email=extra.get("owner_id", ""),
+        # An opaque numeric owner id, never an address. Resolving it to a person needs a
+        # /crm/v3/owners lookup this connector deliberately does not make.
+        owner_ref=extra.get("owner_id", ""),
         contact_email=record.contact_email,
         is_open=extra.get("is_open", "1") == "1",
         updated_at=record.occurred_at.isoformat(),

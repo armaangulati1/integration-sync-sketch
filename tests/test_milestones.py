@@ -33,8 +33,8 @@ def ms(key, planned_end, **kw) -> dict:
     base = {
         "milestone_key": key,
         "name": f"SYNTHETIC {key}",
-        "account_name": "Northgate Health",
-        "owner_email": "dana.rivers@northgate-health.example",
+        "account_name": "Vantree Health",
+        "owner_email": "dana.rivers@vantree-health.example",
         "planned_start": "2026-04-01",
         "planned_end": planned_end,
         "status": STATUS_IN_PROGRESS,

@@ -31,10 +31,12 @@ from datetime import UTC, datetime, timedelta
 
 from .crm_store import CrmStore
 
-# Dead-letter categories the engine writes. Anything starting with "poison" failed the
-# validation boundary; "transient_exhausted" passed validation and failed on the write.
-POISON_PREFIX = "poison"
-CATEGORY_TRANSIENT = "transient_exhausted"
+# The dead-letter categories are IMPORTED, never re-declared here. The engine writes them,
+# so the engine owns them. A copy of the strings in this module would let a rename on one
+# side silently zero the funnel's failure counts while every test stayed green, which is the
+# exact failure a dashboard is least able to show you. Anything under POISON_PREFIX failed
+# the validation boundary; CATEGORY_TRANSIENT passed validation and failed on the write.
+from .sync_engine import CATEGORY_TRANSIENT, POISON_PREFIX
 
 BUCKET_HOUR = "hour"
 BUCKET_DAY = "day"

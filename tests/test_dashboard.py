@@ -84,6 +84,10 @@ def test_the_dashboard_renders_every_panel_without_raising(tmp_path, monkeypatch
 def test_the_rendered_numbers_are_the_ones_the_metrics_module_computed(tmp_path, monkeypatch):
     # The tiles must not recompute anything of their own. If this drifts, a number on the
     # page is coming from somewhere that has no test behind it.
+    #
+    # Every metric tile is pinned here except "Oldest queued item", which is an age measured
+    # against wall clock at render time and so has no constant to pin it to. That exception
+    # is stated in the README rather than left for a reader to discover.
     app_test = pytest.importorskip("streamlit.testing.v1")
     from integration_sync import ops_metrics as om
 
@@ -97,9 +101,21 @@ def test_the_rendered_numbers_are_the_ones_the_metrics_module_computed(tmp_path,
 
     run = app_test.AppTest.from_file(str(APP), default_timeout=60).run()
     shown = {metric.label: metric.value for metric in run.metric}
-    assert shown["ingested"] == str(expected.ingested)
-    assert shown["upserted"] == str(expected.upserted)
+
+    # The top row.
+    assert shown["Records in the store"] == str(expected.upserted)
     assert shown["Dead-letter depth"] == str(expected.dead_lettered_open)
+    assert expected.upsert_rate is not None
+    assert shown["Upsert rate"] == f"{expected.upsert_rate:.1%}"
+
+    # Every stage of the funnel, by the label the metrics module itself supplies.
+    for label, value in expected.stages:
+        assert shown[label] == str(value), label
+
+    # The control: the fixture is not degenerate, so a tile that rendered a constant zero
+    # or echoed one number into every stage would fail the assertions above.
+    assert expected.ingested > expected.upserted > 0
+    assert expected.dead_lettered_open > 0
 
 
 def test_a_missing_store_is_explained_rather_than_crashed_on(tmp_path, monkeypatch):

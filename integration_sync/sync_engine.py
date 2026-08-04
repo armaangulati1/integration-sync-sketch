@@ -47,10 +47,21 @@ from .models import CanonicalRecord, RawRecord
 from .normalize import normalize
 from .retry import call_with_retry
 
-# Category marker for a record that arrived with no natural key. It is stored under a
-# stable content-derived key so the DLQ can dedupe it, but it is NOT auto-recoverable on
-# reprocess: without a source id, only a human can decide its identity.
-CATEGORY_NO_KEY = "poison_no_key"
+# Dead-letter categories. This module writes them, so this module owns them, and anything
+# that reads them (``ops_metrics``, which splits the funnel's failure tail into a data
+# problem and a dependency problem) imports them from here rather than re-declaring the
+# strings. A rename that touched only one side would otherwise silently zero a count on the
+# dashboard while every test stayed green.
+#
+# Everything under POISON_PREFIX failed the validation boundary; CATEGORY_TRANSIENT passed
+# validation and then failed on the write.
+POISON_PREFIX = "poison"
+CATEGORY_POISON = POISON_PREFIX
+# A record that arrived with no natural key. It is stored under a stable content-derived key
+# so the DLQ can dedupe it, but it is NOT auto-recoverable on reprocess: without a source
+# id, only a human can decide its identity.
+CATEGORY_NO_KEY = f"{POISON_PREFIX}_no_key"
+CATEGORY_TRANSIENT = "transient_exhausted"
 
 log = logging.getLogger("sync")
 
@@ -137,7 +148,7 @@ class SyncEngine:
             try:
                 record = normalize(raw)
             except PoisonError as exc:
-                self._dead_letter(raw, str(exc), category="poison", key=exc.natural_key)
+                self._dead_letter(raw, str(exc), category=CATEGORY_POISON, key=exc.natural_key)
                 stats.dead_lettered += 1
                 stats.dead_letter_keys.append(exc.natural_key or "<no-key>")
                 log.warning("%s dead-letter (poison): %s", source, exc)
@@ -149,7 +160,7 @@ class SyncEngine:
             except TransientError as exc:
                 self._dead_letter(
                     raw, f"retry budget exhausted: {exc}",
-                    category="transient_exhausted", key=record.natural_key,
+                    category=CATEGORY_TRANSIENT, key=record.natural_key,
                 )
                 stats.dead_lettered += 1
                 stats.dead_letter_keys.append(record.natural_key)

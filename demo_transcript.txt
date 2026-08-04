@@ -4,9 +4,9 @@
 
 $ python -m pytest
 ........................................................................ [ 42%]
-........................................................................ [ 85%]
-.........................                                                [100%]
-169 passed in 2.71s
+........................................................................ [ 84%]
+...........................                                              [100%]
+171 passed in 2.81s
 
 
 ======================================================================
@@ -20,15 +20,15 @@ wrote synthetic fixtures to <repo>/data/ :
   milestones.json (5 milestones)
 
 --- FIRST SYNC (cold start) ---
-21:07:45 INFO    sync | calendar/evt-1001@sketch created (v1)
-21:07:45 INFO    sync | calendar/evt-1002@sketch created (v1)
-21:07:45 INFO    sync | calendar/evt-1003@sketch created (v1)
-21:07:45 INFO    sync | calendar/evt-1004@sketch created (v1)
-21:07:45 INFO    sync | crm_import/note-3001 created (v1)
-21:07:45 INFO    sync | crm_import/note-3002 created (v1)
-21:07:45 INFO    sync | email/<msg-2001@sketch> created (v1)
-21:07:45 INFO    sync | email/<msg-2002@sketch> created (v1)
-21:07:45 INFO    sync | email/<msg-2003@sketch> created (v1)
+21:33:28 INFO    sync | calendar/evt-1001@sketch created (v1)
+21:33:28 INFO    sync | calendar/evt-1002@sketch created (v1)
+21:33:28 INFO    sync | calendar/evt-1003@sketch created (v1)
+21:33:28 INFO    sync | calendar/evt-1004@sketch created (v1)
+21:33:28 INFO    sync | crm_import/note-3001 created (v1)
+21:33:28 INFO    sync | crm_import/note-3002 created (v1)
+21:33:28 INFO    sync | email/<msg-2001@sketch> created (v1)
+21:33:28 INFO    sync | email/<msg-2002@sketch> created (v1)
+21:33:28 INFO    sync | email/<msg-2003@sketch> created (v1)
 
 === first pass ===
   calendar    created=4 unchanged=0 updated=0 conflict_ignored=0 dead_lettered=0 cursor->2026-03-05T11:00:00+00:00
@@ -47,15 +47,15 @@ table snapshot after first sync: {'contacts': 3, 'accounts': 3, 'activities': 9,
 records the readers even looked at this pass: 0 (cursor did its job)
 
 --- THIRD SYNC (full re-scan: cursors reset, hash-idempotency does the work) ---
-21:07:45 INFO    sync | calendar/evt-1001@sketch unchanged
-21:07:45 INFO    sync | calendar/evt-1002@sketch unchanged
-21:07:45 INFO    sync | calendar/evt-1003@sketch unchanged
-21:07:45 INFO    sync | calendar/evt-1004@sketch unchanged
-21:07:45 INFO    sync | crm_import/note-3001 unchanged
-21:07:45 INFO    sync | crm_import/note-3002 unchanged
-21:07:45 INFO    sync | email/<msg-2001@sketch> unchanged
-21:07:45 INFO    sync | email/<msg-2002@sketch> unchanged
-21:07:45 INFO    sync | email/<msg-2003@sketch> unchanged
+21:33:28 INFO    sync | calendar/evt-1001@sketch unchanged
+21:33:28 INFO    sync | calendar/evt-1002@sketch unchanged
+21:33:28 INFO    sync | calendar/evt-1003@sketch unchanged
+21:33:28 INFO    sync | calendar/evt-1004@sketch unchanged
+21:33:28 INFO    sync | crm_import/note-3001 unchanged
+21:33:28 INFO    sync | crm_import/note-3002 unchanged
+21:33:28 INFO    sync | email/<msg-2001@sketch> unchanged
+21:33:28 INFO    sync | email/<msg-2002@sketch> unchanged
+21:33:28 INFO    sync | email/<msg-2003@sketch> unchanged
 
 === third pass ===
   calendar    created=0 unchanged=4 updated=0 conflict_ignored=0 dead_lettered=0 cursor->2026-03-05T11:00:00+00:00
@@ -80,22 +80,22 @@ $ python scripts/failure_demo.py
 ########## FAILURE-MODE DEMO ##########
 
 --- calendar source ---
-21:07:45 INFO    sync | calendar/evt-good@sketch created (v1)
-21:07:45 INFO    sync | calendar/evt-good@sketch unchanged
-21:07:45 INFO    sync | calendar/evt-conf@sketch created (v1)
-21:07:45 INFO    sync | calendar/evt-conf@sketch conflict ignored (stale)
-21:07:45 WARNING sync | calendar/evt-flaky@sketch transient failure (attempt 1), backing off 0.250s: simulated flaky write for evt-flaky@sketch
-21:07:45 WARNING sync | calendar/evt-flaky@sketch transient failure (attempt 2), backing off 0.500s: simulated flaky write for evt-flaky@sketch
-21:07:45 INFO    sync | calendar/evt-flaky@sketch created (v1)
-21:07:45 WARNING sync | calendar/evt-poison-write@sketch transient failure (attempt 1), backing off 0.250s: simulated flaky write for evt-poison-write@sketch
-21:07:45 WARNING sync | calendar/evt-poison-write@sketch transient failure (attempt 2), backing off 0.500s: simulated flaky write for evt-poison-write@sketch
-21:07:45 WARNING sync | calendar dead-letter (transient, 3 attempts): evt-poison-write@sketch
-21:07:45 WARNING sync | calendar dead-letter (poison): missing or invalid contact_email 'not-an-email'
-21:07:45 WARNING sync | calendar dead-letter (poison): missing natural key
+21:33:28 INFO    sync | calendar/evt-good@sketch created (v1)
+21:33:28 INFO    sync | calendar/evt-good@sketch unchanged
+21:33:28 INFO    sync | calendar/evt-conf@sketch created (v1)
+21:33:28 INFO    sync | calendar/evt-conf@sketch conflict ignored (stale)
+21:33:28 WARNING sync | calendar/evt-flaky@sketch transient failure (attempt 1), backing off 0.250s: simulated flaky write for evt-flaky@sketch
+21:33:28 WARNING sync | calendar/evt-flaky@sketch transient failure (attempt 2), backing off 0.500s: simulated flaky write for evt-flaky@sketch
+21:33:28 INFO    sync | calendar/evt-flaky@sketch created (v1)
+21:33:28 WARNING sync | calendar/evt-poison-write@sketch transient failure (attempt 1), backing off 0.250s: simulated flaky write for evt-poison-write@sketch
+21:33:28 WARNING sync | calendar/evt-poison-write@sketch transient failure (attempt 2), backing off 0.500s: simulated flaky write for evt-poison-write@sketch
+21:33:28 WARNING sync | calendar dead-letter (transient, 3 attempts): evt-poison-write@sketch
+21:33:28 WARNING sync | calendar dead-letter (poison): missing or invalid contact_email 'not-an-email'
+21:33:28 WARNING sync | calendar dead-letter (poison): missing natural key
 
 --- email source ---
-21:07:45 INFO    sync | email/<msg-ok@sketch> created (v1)
-21:07:45 WARNING sync | email dead-letter (poison): unparseable occurred_at 'not-a-date'
+21:33:28 INFO    sync | email/<msg-ok@sketch> created (v1)
+21:33:28 WARNING sync | email dead-letter (poison): unparseable occurred_at 'not-a-date'
 
 === per-source outcome ===
   calendar  created=3 unchanged=1 updated=0 conflict_ignored=1 retries=4 dead_lettered=3
@@ -104,7 +104,7 @@ $ python scripts/failure_demo.py
 === dead-letter queue ===
   [transient_exhausted] calendar/evt-poison-write@sketch (failures=1): retry budget exhausted: simulated flaky write for evt-poison-write@sketch
   [poison            ] calendar/evt-nomail@sketch (failures=1): missing or invalid contact_email 'not-an-email'
-  [poison_no_key     ] calendar/calendar:no-key:10f04e1fabd758c6 (failures=1): missing natural key
+  [poison_no_key     ] calendar/calendar:no-key:3a7c966ba6e5d5a3 (failures=1): missing natural key
   [poison            ] email/<msg-baddate@sketch> (failures=1): unparseable occurred_at 'not-a-date'
 
 === conflict audit trail for evt-conf@sketch ===
@@ -112,16 +112,16 @@ $ python scripts/failure_demo.py
   conflict_ignored incoming occurred_at 2026-04-01T10:00:00+00:00 older than stored; last-write-wins keeps stored
 
 --- reprocessing dead-letter queue (transient dependency now healthy) ---
-21:07:45 INFO    sync | calendar/evt-poison-write@sketch created (v1)
-21:07:45 INFO    sync | reprocess resolved calendar/evt-poison-write@sketch
-21:07:45 WARNING sync | reprocess failed for calendar/evt-nomail@sketch: missing or invalid contact_email 'not-an-email'
-21:07:45 WARNING sync | reprocess failed for calendar/calendar:no-key:10f04e1fabd758c6: missing natural key
-21:07:45 WARNING sync | reprocess failed for email/<msg-baddate@sketch>: unparseable occurred_at 'not-a-date'
+21:33:28 INFO    sync | calendar/evt-poison-write@sketch created (v1)
+21:33:28 INFO    sync | reprocess resolved calendar/evt-poison-write@sketch
+21:33:28 WARNING sync | reprocess failed for calendar/evt-nomail@sketch: missing or invalid contact_email 'not-an-email'
+21:33:28 WARNING sync | reprocess failed for calendar/calendar:no-key:3a7c966ba6e5d5a3: missing natural key
+21:33:28 WARNING sync | reprocess failed for email/<msg-baddate@sketch>: unparseable occurred_at 'not-a-date'
   resolved 1 row(s)
 
 === dead-letter queue after reprocessing ===
   [poison            ] calendar/evt-nomail@sketch still queued
-  [poison_no_key     ] calendar/calendar:no-key:10f04e1fabd758c6 still queued
+  [poison_no_key     ] calendar/calendar:no-key:3a7c966ba6e5d5a3 still queued
   [poison            ] email/<msg-baddate@sketch> still queued
 
 === final store ===
@@ -143,12 +143,12 @@ wrote synthetic fixtures to <repo>/data/ :
 ########## TICKETING + MILESTONE DEMO ##########
 
 --- syncing the ticket board (rate limited, drifting at page 2) ---
-21:07:45 INFO    sync | tickets/OPS-401 created (v1)
-21:07:45 INFO    sync | tickets/OPS-402 created (v1)
-21:07:45 INFO    sync | tickets/OPS-403 created (v1)
-21:07:45 INFO    sync | tickets/OPS-404 created (v1)
-21:07:45 INFO    sync | tickets/OPS-405 created (v1)
-21:07:45 INFO    sync | tickets/OPS-406 created (v1)
+21:33:29 INFO    sync | tickets/OPS-401 created (v1)
+21:33:29 INFO    sync | tickets/OPS-402 created (v1)
+21:33:29 INFO    sync | tickets/OPS-403 created (v1)
+21:33:29 INFO    sync | tickets/OPS-404 created (v1)
+21:33:29 INFO    sync | tickets/OPS-405 created (v1)
+21:33:29 INFO    sync | tickets/OPS-406 created (v1)
   created=6 unchanged=0 updated=0 dead_lettered=0 cursor->2026-04-13T09:00:00+00:00
   endpoint: 3 calls served, 1 throttled
   client waited out 60s of quota across 1 backoff(s)
@@ -159,12 +159,12 @@ wrote synthetic fixtures to <repo>/data/ :
   unknown_field: request_type (field not in the declared contract, kept unmapped)
 
 --- re-syncing the SAME drifted board (idempotency check) ---
-21:07:45 INFO    sync | tickets/OPS-401 unchanged
-21:07:45 INFO    sync | tickets/OPS-402 unchanged
-21:07:45 INFO    sync | tickets/OPS-403 unchanged
-21:07:45 INFO    sync | tickets/OPS-404 unchanged
-21:07:45 INFO    sync | tickets/OPS-405 unchanged
-21:07:45 INFO    sync | tickets/OPS-406 unchanged
+21:33:29 INFO    sync | tickets/OPS-401 unchanged
+21:33:29 INFO    sync | tickets/OPS-402 unchanged
+21:33:29 INFO    sync | tickets/OPS-403 unchanged
+21:33:29 INFO    sync | tickets/OPS-404 unchanged
+21:33:29 INFO    sync | tickets/OPS-405 unchanged
+21:33:29 INFO    sync | tickets/OPS-406 unchanged
   created=0 unchanged=6 updated=0
 
 --- loading the project plan ---
@@ -225,15 +225,15 @@ wrote synthetic fixtures to <repo>/data/ :
   crm_export.json (2 records)
   tickets.json   (6 issues)
   milestones.json (5 milestones)
-21:07:45 INFO    sync | calendar/evt-1001@sketch created (v1)
-21:07:45 INFO    sync | calendar/evt-1002@sketch created (v1)
-21:07:45 INFO    sync | calendar/evt-1003@sketch created (v1)
-21:07:45 INFO    sync | calendar/evt-1004@sketch created (v1)
-21:07:45 INFO    sync | crm_import/note-3001 created (v1)
-21:07:45 INFO    sync | crm_import/note-3002 created (v1)
-21:07:45 INFO    sync | email/<msg-2001@sketch> created (v1)
-21:07:45 INFO    sync | email/<msg-2002@sketch> created (v1)
-21:07:45 INFO    sync | email/<msg-2003@sketch> created (v1)
+21:33:29 INFO    sync | calendar/evt-1001@sketch created (v1)
+21:33:29 INFO    sync | calendar/evt-1002@sketch created (v1)
+21:33:29 INFO    sync | calendar/evt-1003@sketch created (v1)
+21:33:29 INFO    sync | calendar/evt-1004@sketch created (v1)
+21:33:29 INFO    sync | crm_import/note-3001 created (v1)
+21:33:29 INFO    sync | crm_import/note-3002 created (v1)
+21:33:29 INFO    sync | email/<msg-2001@sketch> created (v1)
+21:33:29 INFO    sync | email/<msg-2002@sketch> created (v1)
+21:33:29 INFO    sync | email/<msg-2003@sketch> created (v1)
 
 --- baseline: the three file sources ---
   calendar: created=4 dead_lettered=0
@@ -241,35 +241,35 @@ wrote synthetic fixtures to <repo>/data/ :
   email: created=3 dead_lettered=0
 
 --- syncing HubSpot contacts ---
-21:07:45 INFO    sync.hubspot | hubspot: recorded mode from fixtures/hubspot
-21:07:45 INFO    sync | hubspot_contacts/701 created (v1)
-21:07:45 INFO    sync | hubspot_contacts/702 created (v1)
-21:07:45 WARNING sync.hubspot | hubspot /crm/v3/objects/contacts backing off 10.000s after attempt 1: 429 from HubSpot on /crm/v3/objects/contacts: You have reached your secondly limit.
-21:07:45 INFO    sync | hubspot_contacts/703 created (v1)
-21:07:45 WARNING sync | hubspot_contacts dead-letter (poison): missing or invalid contact_email ''
-21:07:45 INFO    sync | hubspot_contacts/705 created (v1)
+21:33:29 INFO    sync.hubspot | hubspot: recorded mode from fixtures/hubspot
+21:33:29 INFO    sync | hubspot_contacts/701 created (v1)
+21:33:29 INFO    sync | hubspot_contacts/702 created (v1)
+21:33:29 WARNING sync.hubspot | hubspot /crm/v3/objects/contacts backing off 10.000s after attempt 1: 429 from HubSpot on /crm/v3/objects/contacts: You have reached your secondly limit.
+21:33:29 INFO    sync | hubspot_contacts/703 created (v1)
+21:33:29 WARNING sync | hubspot_contacts dead-letter (poison): missing or invalid contact_email ''
+21:33:29 INFO    sync | hubspot_contacts/705 created (v1)
   created=4 unchanged=0 updated=0 dead_lettered=1 cursor->2026-04-06T14:20:00+00:00
   client: 3 page(s) fetched, 1 throttle(s) waited out
   dead-lettered: 704 (no email address, so no contact to attach to)
 
 --- syncing HubSpot deals (associations resolved against synced contacts) ---
-21:07:45 INFO    sync.hubspot | hubspot: recorded mode from fixtures/hubspot
-21:07:45 INFO    sync | hubspot_deals/8801 created (v1)
-21:07:45 INFO    sync | hubspot_deals/8802 created (v1)
-21:07:45 WARNING sync | hubspot_deals dead-letter (poison): missing or invalid contact_email ''
+21:33:29 INFO    sync.hubspot | hubspot: recorded mode from fixtures/hubspot
+21:33:29 INFO    sync | hubspot_deals/8801 created (v1)
+21:33:29 INFO    sync | hubspot_deals/8802 created (v1)
+21:33:29 WARNING sync | hubspot_deals dead-letter (poison): missing or invalid contact_email ''
   created=2 unchanged=0 dead_lettered=1 cursor->2026-04-08T09:45:00+00:00
   dead-lettered: 8803 (associated contact not present, so the deal has nobody to attach to)
-  deal 8801: Northgate Health claims integration | stage=contractsent | amount=48000.00 | contact=dana.rivers@northgate-health.example
-  deal 8802: Lakeside Labs eligibility pilot | stage=closedwon | amount=12500.50 | contact=sam.okafor@lakeside-labs.example
+  deal 8801: Vantree Health claims integration | stage=contractsent | amount=48000.00 | contact=dana.rivers@vantree-health.example
+  deal 8802: Quillhaven Labs eligibility pilot | stage=closedwon | amount=12500.50 | contact=sam.okafor@quillhaven-labs.example
 
 --- re-syncing the SAME contacts (idempotency check) ---
-21:07:45 INFO    sync.hubspot | hubspot: recorded mode from fixtures/hubspot
-21:07:45 INFO    sync | hubspot_contacts/701 unchanged
-21:07:45 INFO    sync | hubspot_contacts/702 unchanged
-21:07:45 WARNING sync.hubspot | hubspot /crm/v3/objects/contacts backing off 10.000s after attempt 1: 429 from HubSpot on /crm/v3/objects/contacts: You have reached your secondly limit.
-21:07:45 INFO    sync | hubspot_contacts/703 unchanged
-21:07:45 WARNING sync | hubspot_contacts dead-letter (poison): missing or invalid contact_email ''
-21:07:45 INFO    sync | hubspot_contacts/705 unchanged
+21:33:29 INFO    sync.hubspot | hubspot: recorded mode from fixtures/hubspot
+21:33:29 INFO    sync | hubspot_contacts/701 unchanged
+21:33:29 INFO    sync | hubspot_contacts/702 unchanged
+21:33:29 WARNING sync.hubspot | hubspot /crm/v3/objects/contacts backing off 10.000s after attempt 1: 429 from HubSpot on /crm/v3/objects/contacts: You have reached your secondly limit.
+21:33:29 INFO    sync | hubspot_contacts/703 unchanged
+21:33:29 WARNING sync | hubspot_contacts dead-letter (poison): missing or invalid contact_email ''
+21:33:29 INFO    sync | hubspot_contacts/705 unchanged
   created=0 unchanged=4 updated=0
 
 --- what the dashboard will show ---

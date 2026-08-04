@@ -29,9 +29,9 @@ def make_raw(
     occurred_at: str,
     subject: str = "SYNTHETIC subject",
     body: str = "SYNTHETIC body",
-    email: str = "dana.rivers@northgate-health.example",
+    email: str = "dana.rivers@vantree-health.example",
     name: str = "Dana Rivers",
-    account: str = "Northgate Health",
+    account: str = "Vantree Health",
     source: str = SOURCE_CALENDAR,
     kind: str = "meeting",
 ) -> RawRecord:

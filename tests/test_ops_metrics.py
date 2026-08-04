@@ -9,11 +9,12 @@ metric fails here instead of being papered over by a fixture that agrees with it
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
 from integration_sync import ops_metrics as om
+from integration_sync import sync_engine
 from integration_sync.crm_store import CrmStore
 from integration_sync.errors import TransientError
 from integration_sync.models import SOURCE_CALENDAR, SOURCE_EMAIL
@@ -165,6 +166,38 @@ def test_a_write_failure_is_counted_separately_from_a_validation_failure(store):
     assert result.upserted == 0
 
 
+def test_the_funnel_splits_on_the_engines_own_category_constants(store):
+    """The split above is only trustworthy if both sides agree on the category strings.
+
+    ``ops_metrics`` used to re-declare them. A rename in the engine would then have left the
+    funnel matching strings nobody writes any more, and ``failed_write`` would have read 0
+    forever with a green suite behind it.
+
+    Asserting the two constants are equal would not catch that, because CPython interns
+    identifier-shaped literals and a copy would compare equal anyway. So this drives the
+    queue with whatever the ENGINE currently calls each category and asserts the funnel
+    still classifies it. A rename on one side only makes this fail.
+    """
+    assert om.POISON_PREFIX == sync_engine.POISON_PREFIX
+    assert om.CATEGORY_TRANSIENT == sync_engine.CATEGORY_TRANSIENT
+
+    with store.transaction():
+        store.add_dead_letter(
+            source=SOURCE_EMAIL, natural_key="bad-shape", payload_json="{}",
+            error="SYNTHETIC", category=sync_engine.CATEGORY_NO_KEY,
+        )
+        store.add_dead_letter(
+            source=SOURCE_EMAIL, natural_key="flaky-write", payload_json="{}",
+            error="SYNTHETIC", category=sync_engine.CATEGORY_TRANSIENT,
+        )
+    result = om.funnel(store)
+
+    assert result.failed_validation == 1
+    assert result.failed_write == 1
+    # The control: neither count is picking up both rows, so the split is real.
+    assert result.ingested == 2
+
+
 def test_a_reprocessed_record_stops_counting_as_lost(store):
     # A dead-letter row with a ledger entry beside it is history, not backlog.
     calls = {"n": 0}
@@ -254,12 +287,36 @@ def test_a_resolved_row_leaves_the_queue(store):
 
 def test_cursor_lag_separates_a_quiet_source_from_a_stopped_job(store):
     store.set_cursor(SOURCE_CALENDAR, "2026-04-09T12:00:00+00:00")
+    # ``set_cursor`` stamps ``updated_at`` with the real clock, which is far LATER than the
+    # fixed AS_OF, and ``age_hours`` floors a future stamp at 0. Left alone, the staleness
+    # assertion below could not fail whatever the code did. So the row is restamped to a
+    # real 30 minutes before AS_OF: a job that ran recently, against data a day old.
+    store.conn.execute(
+        "UPDATE sync_state SET updated_at = ? WHERE source = ?",
+        ((AS_OF - timedelta(minutes=30)).isoformat(), SOURCE_CALENDAR),
+    )
     lags = {row.source: row for row in om.cursor_lag(store, AS_OF)}
     calendar = lags[SOURCE_CALENDAR]
 
     assert calendar.lag_hours == pytest.approx(24.0)  # the DATA is a day behind
-    # The JOB just ran, so staleness is near zero even though the data lag is a full day.
-    assert calendar.staleness_hours < 1.0
+    assert calendar.staleness_hours == pytest.approx(0.5)  # the JOB ran half an hour ago
+    # The pairing is the whole point: conflating these two is the classic misread.
+    assert calendar.staleness_hours < 1.0 < calendar.lag_hours
+
+
+def test_a_wedged_job_shows_high_staleness_on_the_same_cursor(store):
+    # The control for the test above. Same data lag, stopped worker, and the two numbers
+    # separate in the opposite direction.
+    store.set_cursor(SOURCE_CALENDAR, "2026-04-09T12:00:00+00:00")
+    store.conn.execute(
+        "UPDATE sync_state SET updated_at = ? WHERE source = ?",
+        ((AS_OF - timedelta(hours=8)).isoformat(), SOURCE_CALENDAR),
+    )
+    calendar = om.cursor_lag(store, AS_OF)[0]
+
+    assert calendar.lag_hours == pytest.approx(24.0)
+    assert calendar.staleness_hours == pytest.approx(8.0)
+    assert calendar.staleness_hours > 1.0
 
 
 def test_a_cursor_that_was_never_set_reports_unknown_lag_not_zero(store):
@@ -272,7 +329,7 @@ def test_deal_amounts_sum_exactly_in_decimal(store):
     for i, amount in enumerate(("0.10", "0.20", "48000.00")):
         store.upsert_deal(
             deal_id=f"d{i}", name="SYNTHETIC", stage="contractsent", pipeline="default",
-            amount=amount, close_date="", owner_email="", contact_email="",
+            amount=amount, close_date="", owner_ref="", contact_email="",
             is_open=True, updated_at="2026-04-01T00:00:00+00:00",
         )
     summary = om.deals_by_stage(store)
@@ -284,7 +341,7 @@ def test_deal_amounts_sum_exactly_in_decimal(store):
 def test_a_non_numeric_deal_amount_does_not_poison_the_total(store):
     store.upsert_deal(
         deal_id="d1", name="SYNTHETIC", stage="qualifiedtobuy", pipeline="default",
-        amount="not a number", close_date="", owner_email="", contact_email="",
+        amount="not a number", close_date="", owner_ref="", contact_email="",
         is_open=True, updated_at="2026-04-01T00:00:00+00:00",
     )
     assert om.deals_by_stage(store)[0].amount == "0.00"
