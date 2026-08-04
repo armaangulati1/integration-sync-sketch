@@ -1,7 +1,7 @@
 [project]
 name = "integration-sync-sketch"
 version = "0.1.0"
-description = "A study of the patterns behind syncing external systems (calendar, email, CRM, ticketing) into a unified store: idempotency, incremental cursors, conflict policy, retry with backoff, rate-limit handling, schema-drift tolerance, dead-lettering, and a milestone risk layer. Synthetic self-authored data, demo scope, not production."
+description = "A study of the patterns behind syncing external systems (calendar, email, CRM, ticketing, HubSpot) into a unified store: idempotency, incremental cursors, conflict policy, retry with backoff, rate-limit handling, schema-drift tolerance, dead-lettering, a milestone risk layer, and an operational dashboard. Synthetic self-authored data, demo scope, not production."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
@@ -11,6 +11,10 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=7.0", "ruff>=0.5"]
+# The ops dashboard is the only thing that needs a UI framework, so it is kept out of the
+# base install. The sync engine, the HubSpot connector, and the metrics module all work
+# without it. `width="stretch"` on dataframes needs a recent streamlit.
+dashboard = ["streamlit>=1.49"]
 
 [tool.setuptools.packages.find]
 include = ["integration_sync*"]
