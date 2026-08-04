@@ -113,6 +113,20 @@ CREATE TABLE IF NOT EXISTS tickets (
     unmapped_json TEXT NOT NULL DEFAULT '{}'
 );
 
+CREATE TABLE IF NOT EXISTS deals (
+    deal_id       TEXT PRIMARY KEY,
+    name          TEXT NOT NULL DEFAULT '',
+    stage         TEXT NOT NULL DEFAULT '',
+    pipeline      TEXT NOT NULL DEFAULT '',
+    amount        TEXT NOT NULL DEFAULT '',
+    close_date    TEXT NOT NULL DEFAULT '',
+    owner_email   TEXT NOT NULL DEFAULT '',
+    contact_email TEXT NOT NULL DEFAULT '',
+    is_open       INTEGER NOT NULL DEFAULT 1,
+    updated_at    TEXT NOT NULL DEFAULT '',
+    unmapped_json TEXT NOT NULL DEFAULT '{}'
+);
+
 CREATE TABLE IF NOT EXISTS milestones (
     milestone_key TEXT PRIMARY KEY,
     name          TEXT NOT NULL DEFAULT '',
@@ -146,6 +160,7 @@ CREATE INDEX IF NOT EXISTS idx_activities_contact ON activities(contact_id);
 CREATE INDEX IF NOT EXISTS idx_audit_key ON audit_log(source, natural_key);
 CREATE INDEX IF NOT EXISTS idx_dl_unresolved ON dead_letter(resolved);
 CREATE INDEX IF NOT EXISTS idx_tickets_milestone ON tickets(milestone_key);
+CREATE INDEX IF NOT EXISTS idx_deals_contact ON deals(contact_email);
 """
 
 
@@ -301,6 +316,50 @@ class CrmStore:
             "SELECT * FROM tickets WHERE milestone_key = ? ORDER BY ticket_key",
             (milestone_key,),
         ).fetchall()
+
+    # -- CRM deals (the HubSpot-shaped projection) ---------------------------
+
+    def upsert_deal(
+        self,
+        *,
+        deal_id: str,
+        name: str,
+        stage: str,
+        pipeline: str,
+        amount: str,
+        close_date: str,
+        owner_email: str,
+        contact_email: str,
+        is_open: bool,
+        updated_at: str,
+        unmapped_json: str = "{}",
+    ) -> None:
+        """Write the deal-shaped projection of a synced CRM deal record.
+
+        Called by the engine INSIDE the record's transaction, for the same reason the ticket
+        projector is: a deal row must never exist without the activity, ledger, and audit
+        rows that justify it. ``amount`` is stored as TEXT deliberately, so a currency value
+        round-trips exactly instead of through a binary float.
+        """
+        self.conn.execute(
+            "INSERT INTO deals (deal_id, name, stage, pipeline, amount, close_date, "
+            "owner_email, contact_email, is_open, updated_at, unmapped_json) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+            "ON CONFLICT(deal_id) DO UPDATE SET name = excluded.name, "
+            "stage = excluded.stage, pipeline = excluded.pipeline, "
+            "amount = excluded.amount, close_date = excluded.close_date, "
+            "owner_email = excluded.owner_email, contact_email = excluded.contact_email, "
+            "is_open = excluded.is_open, updated_at = excluded.updated_at, "
+            "unmapped_json = excluded.unmapped_json",
+            (deal_id, name, stage, pipeline, amount, close_date, owner_email,
+             contact_email, 1 if is_open else 0, updated_at, unmapped_json),
+        )
+
+    def get_deal(self, deal_id: str) -> sqlite3.Row | None:
+        return self.conn.execute("SELECT * FROM deals WHERE deal_id = ?", (deal_id,)).fetchone()
+
+    def all_deals(self) -> list[sqlite3.Row]:
+        return self.conn.execute("SELECT * FROM deals ORDER BY deal_id").fetchall()
 
     # -- project milestones --------------------------------------------------
 
@@ -538,7 +597,7 @@ class CrmStore:
         allowed = {
             "contacts", "accounts", "activities", "sync_records",
             "audit_log", "dead_letter", "sync_state",
-            "tickets", "milestones", "milestone_deps", "escalations",
+            "tickets", "deals", "milestones", "milestone_deps", "escalations",
         }
         if table not in allowed:
             raise ValueError(f"unknown table {table!r}")
@@ -560,5 +619,5 @@ class CrmStore:
         return {
             t: self.count(t)
             for t in ("contacts", "accounts", "activities", "sync_records",
-                      "audit_log", "dead_letter", "tickets")
+                      "audit_log", "dead_letter", "tickets", "deals")
         }

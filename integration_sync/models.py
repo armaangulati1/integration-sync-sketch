@@ -14,14 +14,27 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
-# The four source surfaces this demo syncs FROM.
+# The source surfaces this demo syncs FROM.
 SOURCE_CALENDAR = "calendar"
 SOURCE_EMAIL = "email"
 SOURCE_CRM_IMPORT = "crm_import"
 SOURCE_TICKETS = "tickets"
+# The HubSpot surfaces are two distinct sources, not one, because they have separate
+# cursors: contacts and deals move at different rates, and a deal sync that fails must not
+# rewind the contact watermark. Two sources is also what makes the ordering dependency
+# between them explicit (a deal is only linkable once its contact has landed).
+SOURCE_HUBSPOT_CONTACTS = "hubspot_contacts"
+SOURCE_HUBSPOT_DEALS = "hubspot_deals"
 
 VALID_SOURCES = frozenset(
-    {SOURCE_CALENDAR, SOURCE_EMAIL, SOURCE_CRM_IMPORT, SOURCE_TICKETS}
+    {
+        SOURCE_CALENDAR,
+        SOURCE_EMAIL,
+        SOURCE_CRM_IMPORT,
+        SOURCE_TICKETS,
+        SOURCE_HUBSPOT_CONTACTS,
+        SOURCE_HUBSPOT_DEALS,
+    }
 )
 
 
