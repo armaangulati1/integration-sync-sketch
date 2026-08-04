@@ -18,7 +18,7 @@ jobs:
       - name: Install
         run: |
           python -m pip install --upgrade pip
-          pip install -e ".[dev]"
+          pip install -e ".[dev,dashboard]"
       - name: Ruff
         run: ruff check .
       - name: Tests
@@ -28,3 +28,4 @@ jobs:
           python scripts/run_demo.py
           python scripts/failure_demo.py
           python scripts/milestone_demo.py
+          python scripts/hubspot_demo.py

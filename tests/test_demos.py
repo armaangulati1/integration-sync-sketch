@@ -1,4 +1,4 @@
-"""End-to-end smoke tests: the three demo scripts run clean and self-assert.
+"""End-to-end smoke tests: the four demo scripts run clean and self-assert.
 
 Each demo ends with an internal assertion/`SystemExit` if their invariants break, so a
 zero exit code is itself a meaningful check. We also assert on marker strings so a silent
@@ -49,3 +49,17 @@ def test_milestone_demo_runs_throttled_drifted_and_self_asserts():
     assert "milestone_overdue" in result.stdout
     assert "blocking_ticket_overdue" in result.stdout
     assert "projected_late" in result.stdout
+
+
+def test_hubspot_demo_runs_recorded_and_self_asserts():
+    result = _run("hubspot_demo.py")
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "OK: HubSpot contacts and deals synced" in result.stdout
+    # It ran in recorded mode, not against anyone's account.
+    assert "HUBSPOT CONNECTOR DEMO (RECORDED)" in result.stdout
+    # The two planted conditions actually fired.
+    assert "3 page(s) fetched, 1 throttle(s) waited out" in result.stdout
+    assert "dead-lettered: 704" in result.stdout
+    assert "dead-lettered: 8803" in result.stdout
+    # And the re-run really was a no-op.
+    assert "created=0 unchanged=4 updated=0" in result.stdout
