@@ -227,7 +227,10 @@ def main() -> None:
     write_crm_export(DATA / "crm_export.json", crm_notes())
     write_ticket_export(str(DATA / "tickets.json"), tickets())
     (DATA / "milestones.json").write_text(json.dumps(milestones(), indent=2), encoding="utf-8")
-    print(f"wrote synthetic fixtures to {DATA}/ :")
+    # Printed as <repo>/data rather than the absolute path. This output is captured into
+    # demo_transcript.txt, which is committed, and an absolute path there publishes the
+    # directory layout of whatever machine happened to produce it.
+    print(f"wrote synthetic fixtures to <repo>/{DATA.name}/ :")
     print(f"  calendar.ics   ({len(calendar_events())} events)")
     print(f"  mailbox.mbox   ({len(emails())} messages)")
     print(f"  crm_export.json ({len(crm_notes())} records)")
